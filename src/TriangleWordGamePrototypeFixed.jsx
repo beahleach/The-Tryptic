@@ -14,8 +14,10 @@ import {
   Triangle,
 } from "lucide-react";
 import { fetchPreferences, savePreferences } from "./preferencesApi";
+import { fetchTriangleDebuts, saveTriangleDebuts } from "./triangleDebutApi";
 import trypticLogo from "./assets/tryptic-logo.png";
 import { bundledPresetPuzzleFiles, bundledTemplateSquares } from "./bundledPuzzles";
+import bundledTriangleDebuts from "./triangleDebuts.json";
 
 function getBundledPresetPuzzleRaw(fileName) {
   const raw = bundledPresetPuzzleFiles[fileName];
@@ -194,7 +196,6 @@ const SKIP_HINT_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-hint-confirm";
 const SKIP_REVEAL_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-reveal-confirm";
 const GAME_SESSION_STORAGE_KEY = "triangle-word-game-session";
 const PUZZLE_PRESETS_STORAGE_KEY = "triangle-word-game-puzzle-presets";
-const TRIANGLE_DEBUTS_STORAGE_KEY = "triangle-word-game-triangle-debuts";
 const ENABLE_PREFERENCE_MEMORY = true;
 const HINT_TOOLTIP_HOVER_DELAY_MS = 250;
 const HINT_TOOLTIP_MOVE_TOLERANCE_PX = 10;
@@ -875,38 +876,13 @@ function sortTriangleDebuts(entries) {
   return [...entries].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }
 
-function readStoredTriangleDebuts() {
-  if (typeof window === "undefined") return [];
-
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(TRIANGLE_DEBUTS_STORAGE_KEY) || "[]");
-    if (!Array.isArray(parsed)) return [];
-
-    const now = Date.now();
-    return sortTriangleDebuts(
-      parsed
-        .map((entry) => sanitizeTriangleDebutEntry(entry))
-        .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
-    );
-  } catch {
-    return [];
-  }
-}
-
-function writeStoredTriangleDebuts(entries) {
-  if (typeof window === "undefined") return;
-
-  try {
-    const now = Date.now();
-    const sanitized = sortTriangleDebuts(
-      entries
-        .map((entry) => sanitizeTriangleDebutEntry(entry))
-        .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
-    );
-    window.localStorage.setItem(TRIANGLE_DEBUTS_STORAGE_KEY, JSON.stringify(sanitized));
-  } catch {
-    // Keep the current in-memory debuts even if browser storage is unavailable.
-  }
+function readBundledTriangleDebuts() {
+  const now = Date.now();
+  return sortTriangleDebuts(
+    (Array.isArray(bundledTriangleDebuts) ? bundledTriangleDebuts : [])
+      .map((entry) => sanitizeTriangleDebutEntry(entry))
+      .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
+  );
 }
 
 function getActiveTriangleDebut(entries, now = Date.now()) {
@@ -920,7 +896,7 @@ function getActiveTriangleDebut(entries, now = Date.now()) {
 }
 
 function getInitialPuzzleSource() {
-  return getActiveTriangleDebut(readStoredTriangleDebuts()) || readPuzzlePresets()[PUZZLE_PRESET_SLOTS[0].id] || null;
+  return getActiveTriangleDebut(readBundledTriangleDebuts()) || readPuzzlePresets()[PUZZLE_PRESET_SLOTS[0].id] || null;
 }
 
 function getInitialPuzzleState() {
@@ -1997,7 +1973,7 @@ export default function TriangleWordGamePrototypeFixed() {
   const [editingClueIndex, setEditingClueIndex] = useState(null);
   const [mode, setMode] = useState("player");
   const [puzzlePresets, setPuzzlePresets] = useState(() => readPuzzlePresets());
-  const [scheduledTriangleDebuts, setScheduledTriangleDebuts] = useState(() => readStoredTriangleDebuts());
+  const [scheduledTriangleDebuts, setScheduledTriangleDebuts] = useState(() => readBundledTriangleDebuts());
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [showSettingsPresetMenu, setShowSettingsPresetMenu] = useState(false);
   const [showDebutMenu, setShowDebutMenu] = useState(false);
@@ -2426,6 +2402,35 @@ export default function TriangleWordGamePrototypeFixed() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isLocalEditorEnabled) return undefined;
+
+    let cancelled = false;
+
+    const syncTriangleDebutsFromBackend = async () => {
+      try {
+        const entries = await fetchTriangleDebuts();
+        if (cancelled || !Array.isArray(entries)) return;
+
+        const now = Date.now();
+        const sanitized = sortTriangleDebuts(
+          entries
+            .map((entry) => sanitizeTriangleDebutEntry(entry))
+            .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
+        );
+        setScheduledTriangleDebuts(sanitized);
+      } catch {
+        // Keep bundled schedule data if the backend is unavailable.
+      }
+    };
+
+    syncTriangleDebutsFromBackend();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLocalEditorEnabled]);
 
   useEffect(() => {
     if (!ENABLE_PREFERENCE_MEMORY) return;
@@ -3540,7 +3545,7 @@ export default function TriangleWordGamePrototypeFixed() {
     }
   };
 
-  const handleSaveTriangleDebut = () => {
+  const handleSaveTriangleDebut = async () => {
     const startAt = buildLocalDateFromInputs(debutDateInput, debutTimeInput);
     if (!startAt) {
       setPuzzleActionStatus("Choose a valid debut date and time.");
@@ -3575,24 +3580,34 @@ export default function TriangleWordGamePrototypeFixed() {
     ]);
 
     setScheduledTriangleDebuts(nextDebuts);
-    writeStoredTriangleDebuts(nextDebuts);
     setSelectedDebutId(nextEntry.id);
-    setPuzzleActionStatus(
-      selectedDebutId
+    try {
+      const result = await saveTriangleDebuts(nextDebuts);
+      const prefix = selectedDebutId
         ? `Updated ${nextEntry.name}. It will debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
-        : `Scheduled ${nextEntry.name} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
-    );
+        : `Scheduled ${nextEntry.name} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`;
+      setPuzzleActionStatus(
+        result?.publish?.ok === false ? `${prefix} ${result.publish.message}` : prefix
+      );
+    } catch {
+      setPuzzleActionStatus("Saved the debut locally in this session, but could not write the repo-backed debut schedule.");
+    }
   };
 
-  const handleDeleteTriangleDebut = () => {
+  const handleDeleteTriangleDebut = async () => {
     if (!selectedDebutId) return;
 
     const removedEntry = scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId);
     const nextDebuts = scheduledTriangleDebuts.filter((entry) => entry.id !== selectedDebutId);
     setScheduledTriangleDebuts(nextDebuts);
-    writeStoredTriangleDebuts(nextDebuts);
     resetDebutForm();
-    setPuzzleActionStatus(`Deleted scheduled debut ${removedEntry?.name || ""}`.trim());
+    try {
+      const result = await saveTriangleDebuts(nextDebuts);
+      const prefix = `Deleted scheduled debut ${removedEntry?.name || ""}`.trim();
+      setPuzzleActionStatus(result?.publish?.ok === false ? `${prefix}. ${result.publish.message}` : prefix);
+    } catch {
+      setPuzzleActionStatus("Removed the debut locally in this session, but could not write the repo-backed debut schedule.");
+    }
   };
 
   const handlePresetSet = async (slot) => {

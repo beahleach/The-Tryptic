@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "server": "node server/index.js",
+    "publish:triangle-debuts": "node scripts/publish-triangle-debuts.mjs",
     "proof:playtester": "node scripts/proof-playtester-package.mjs"
   },
   "dependencies": {
