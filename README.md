@@ -10,7 +10,11 @@ The latest GitHub Pages build is published here:
 
 https://beahleach.github.io/The-Tryptic/
 
-Interactive How to Play:
+Repo-native How to Play:
+
+[HOW_TO_PLAY.md](HOW_TO_PLAY.md)
+
+Interactive in-app How to Play:
 
 https://beahleach.github.io/The-Tryptic/#how-to-play
 
