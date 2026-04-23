@@ -1,86 +1,61 @@
 # The Tryptic
 
-## Playtester Run Steps
+![Status: Beta](https://img.shields.io/badge/status-beta-7c3aed)
 
-From inside the `The Tryptic` folder:
+The Tryptic is a triangular cryptic-style word puzzle game. Solve three clues around a triangle, use hints or reveals when needed, and switch into the editor to load or shape new `.try` puzzles.
+
+## Play
+
+The latest GitHub Pages build is published here:
+
+https://beahleach.github.io/The-Tryptic/
+
+The app is currently in beta, so layout, puzzle content, and editor tools may still change.
+
+## Run Locally
+
+From the project folder:
 
 ```sh
 ./RUN
 ```
 
-The `RUN` script installs dependencies if `node_modules/` is missing, starts the app, and opens it in your default browser.
+`RUN` installs dependencies if needed, starts Vite, and opens the app in your default browser.
 
-You can also run the commands manually:
+Manual equivalent:
 
 ```sh
 npm install
 npm run dev
 ```
 
-Then open the local URL printed by Vite, usually `http://localhost:5173/`.
-
-If the folder already includes `node_modules/`, `npm install` can be skipped. If port `5173` is already busy, Vite will print a different local URL.
-
-## What Playtesters Need
-
-Required files and folders:
-
-- `src/`
-- `RUN`
-- `index.html`
-- `package.json`
-- `package-lock.json`
-- `vite.config.js`
-- `node_modules/`, or internet access to run `npm install`
-
-Not required for playtesting:
-
-- `Puzzles/`
-- `dist/`
-- `server/`
-
-The five playtest presets and template puzzle layouts are embedded in `src/bundledPuzzles.js`, so the app can run without the local puzzle library.
-
-## Clean Preset State
-
-If a tester has opened an older version of the app at the same URL before, their browser may have local preset overrides saved. For a clean run, use a browser/profile that has not opened the app before, or clear site data for the local app URL.
-
-First-time testers do not need to do anything special.
-
-## Build A Static Copy
-
-To generate a static build:
+## Development
 
 ```sh
+npm run dev
 npm run build
-```
-
-The output goes into `dist/`.
-
-## Proof Script
-
-To verify the playtester package can run without `Puzzles/`:
-
-```sh
 npm run proof:playtester
 ```
 
-The script creates a temporary copy of the playtester files, deliberately omits `Puzzles/`, installs dependencies from `package-lock.json`, builds the app, briefly starts the dev server, and deletes the temporary copy.
+- `npm run dev` starts the local Vite server.
+- `npm run build` creates a static production build in `dist/`.
+- `npm run proof:playtester` verifies the app can build and run from a temporary copy without the local `Puzzles/` folder.
 
-## GitHub Pages Auto-Deploy
+## Puzzle Data
 
-This repo includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+The beta play puzzles and template layouts are embedded in `src/bundledPuzzles.js`, so the public app and local run script do not require the full local puzzle library.
 
-After the project is pushed to GitHub, enable Pages in the repository settings:
+Local puzzle files can still be loaded and saved as `.try` files from the editor.
 
-- Go to `Settings` > `Pages`
-- Set `Source` to `GitHub Actions`
+## Deployment
 
-After that, every push to `main` will build the app and publish the latest `dist/` output to GitHub Pages.
+GitHub Pages deploys automatically from `.github/workflows/deploy-pages.yml`.
 
-To connect a local repo to GitHub:
+Every push to `main` runs:
 
 ```sh
-git remote add origin YOUR_GITHUB_REPO_URL
-git push -u origin main
+npm ci
+npm run build
 ```
+
+and publishes the resulting `dist/` folder to GitHub Pages.
