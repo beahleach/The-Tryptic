@@ -221,6 +221,19 @@ function isLocalEditorEnvironment() {
   );
 }
 
+function ModeToggleSpacer({ theme }) {
+  return (
+    <div
+      aria-hidden="true"
+      className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border px-1.5 opacity-0"
+      style={{ borderColor: theme.controlBorder, background: theme.controlGroupBg, pointerEvents: "none" }}
+    >
+      <span className="h-8 w-8 rounded-full" />
+      <span className="h-8 w-8 rounded-full" />
+    </div>
+  );
+}
+
 const BUNDLED_PUZZLE_PRESET_RAWS = {
   "triangle-1": { fileName: "SKIP_PAWN_STERN.try", raw: defaultPuzzleFileRaw },
   "triangle-2": { fileName: "GUFFAW_GADGET_WART.try", raw: presetGuffawGadgetWartRaw },
@@ -4424,7 +4437,9 @@ export default function TriangleWordGamePrototypeFixed() {
                           <Pencil size={18} strokeWidth={1.8} />
                         </button>
                       </div>
-                    ) : null}
+                    ) : (
+                      <ModeToggleSpacer theme={theme} />
+                    )}
                   </div>
                 </div>
               </div>
