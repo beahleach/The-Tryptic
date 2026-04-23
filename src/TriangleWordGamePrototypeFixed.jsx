@@ -4401,58 +4401,56 @@ export default function TriangleWordGamePrototypeFixed() {
                             {label}
                           </button>
                         ))}
-                        {isLocalEditorEnabled ? (
-                          <>
-                            <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
-                            <div className="relative">
-                              <button
-                                type="button"
-                                onClick={() => setShowSettingsPresetMenu((prev) => !prev)}
-                                className="flex w-full items-center justify-between px-4 py-3 text-left text-[16px] transition-colors"
-                                style={{
-                                  color: theme.text,
-                                  background: showSettingsPresetMenu ? theme.menuHoverBg : "transparent",
-                                }}
-                                onMouseEnter={(event) => {
-                                  if (!showSettingsPresetMenu) {
-                                    event.currentTarget.style.background = theme.menuHoverBg;
-                                  }
-                                }}
-                                onMouseLeave={(event) => {
-                                  if (!showSettingsPresetMenu) {
-                                    event.currentTarget.style.background = "transparent";
-                                  }
-                                }}
+                        <>
+                          <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => setShowSettingsPresetMenu((prev) => !prev)}
+                              className="flex w-full items-center justify-between px-4 py-3 text-left text-[16px] transition-colors"
+                              style={{
+                                color: theme.text,
+                                background: showSettingsPresetMenu ? theme.menuHoverBg : "transparent",
+                              }}
+                              onMouseEnter={(event) => {
+                                if (!showSettingsPresetMenu) {
+                                  event.currentTarget.style.background = theme.menuHoverBg;
+                                }
+                              }}
+                              onMouseLeave={(event) => {
+                                if (!showSettingsPresetMenu) {
+                                  event.currentTarget.style.background = "transparent";
+                                }
+                              }}
+                            >
+                              <span>Load preset (playtest)</span>
+                            </button>
+                            {showSettingsPresetMenu && (
+                              <div
+                                className="absolute left-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+                                style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
                               >
-                                <span>Load preset (playtest)</span>
-                              </button>
-                              {showSettingsPresetMenu && (
-                                <div
-                                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-                                  style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
-                                >
-                                  {availablePresetSlots.map((slot) => (
-                                    <button
-                                      key={slot.id}
-                                      type="button"
-                                      onClick={() => handlePresetLoad(slot)}
-                                      className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
-                                      style={{ color: theme.text, background: "transparent" }}
-                                      onMouseEnter={(event) => {
-                                        event.currentTarget.style.background = theme.menuHoverBg;
-                                      }}
-                                      onMouseLeave={(event) => {
-                                        event.currentTarget.style.background = "transparent";
-                                      }}
-                                    >
-                                      {slot.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </>
-                        ) : null}
+                                {availablePresetSlots.map((slot) => (
+                                  <button
+                                    key={slot.id}
+                                    type="button"
+                                    onClick={() => handlePresetLoad(slot)}
+                                    className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
+                                    style={{ color: theme.text, background: "transparent" }}
+                                    onMouseEnter={(event) => {
+                                      event.currentTarget.style.background = theme.menuHoverBg;
+                                    }}
+                                    onMouseLeave={(event) => {
+                                      event.currentTarget.style.background = "transparent";
+                                    }}
+                                  >
+                                    {slot.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </>
                       </div>
                     )}
                   </div>
