@@ -204,6 +204,18 @@ const PUZZLE_PRESET_SLOTS = [
   { id: "triangle-5", label: "Triangle 5" },
 ];
 
+function isLocalEditorEnvironment() {
+  if (typeof window === "undefined") return false;
+
+  const { hostname, protocol } = window.location;
+  return (
+    protocol === "file:" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1"
+  );
+}
+
 const BUNDLED_PUZZLE_PRESET_RAWS = {
   "triangle-1": { fileName: "SKIP_PAWN_STERN.try", raw: defaultPuzzleFileRaw },
   "triangle-2": { fileName: "GUFFAW_GADGET_WART.try", raw: presetGuffawGadgetWartRaw },
@@ -795,7 +807,7 @@ function normalizePlayerLettersSnapshot(playerLetters, squares) {
   );
 }
 
-function normalizeGameSessionSnapshot(snapshot) {
+function normalizeGameSessionSnapshot(snapshot, { allowEditorMode = false } = {}) {
   if (!snapshot || typeof snapshot !== "object") return null;
   if (snapshot.version !== GAME_SESSION_SCHEMA_VERSION) return null;
 
@@ -811,7 +823,7 @@ function normalizeGameSessionSnapshot(snapshot) {
     hasStartedGame: Boolean(snapshot.hasStartedGame),
     showStartModal: Boolean(snapshot.showStartModal),
     isPaused: Boolean(snapshot.isPaused),
-    mode: snapshot.mode === "editor" ? "editor" : "player",
+    mode: allowEditorMode && snapshot.mode === "editor" ? "editor" : "player",
     showSolvedModal: Boolean(snapshot.showSolvedModal),
     finishedState: sanitizedFinishedState,
     assistLog: sanitizeAssistLog(snapshot.assistLog),
@@ -1822,6 +1834,7 @@ function getTriangleGraphicBounds(squares) {
 }
 
 export default function TriangleWordGamePrototypeFixed() {
+  const isLocalEditorEnabled = isLocalEditorEnvironment();
   const [squares, setSquares] = useState(() => getInitialPuzzleState().squares);
   const triangleGraphicBounds = useMemo(() => getTriangleGraphicBounds(squares), [squares]);
   const [selectedId, setSelectedId] = useState(() => getPreferredSelectedSquareId(getInitialPuzzleState().squares));
@@ -2144,7 +2157,9 @@ export default function TriangleWordGamePrototypeFixed() {
       const rawSession = window.sessionStorage.getItem(GAME_SESSION_STORAGE_KEY);
       if (rawSession) {
         const parsedSession = JSON.parse(rawSession);
-        const restoredSession = normalizeGameSessionSnapshot(parsedSession);
+        const restoredSession = normalizeGameSessionSnapshot(parsedSession, {
+          allowEditorMode: isLocalEditorEnabled,
+        });
 
         if (restoredSession) {
           setSquares(restoredSession.squares);
@@ -2170,7 +2185,7 @@ export default function TriangleWordGamePrototypeFixed() {
     } finally {
       setSessionHydrated(true);
     }
-  }, []);
+  }, [isLocalEditorEnabled]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -3177,6 +3192,11 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const enterEditorMode = (event) => {
+    if (!isLocalEditorEnabled) {
+      enterPlayerMode();
+      return;
+    }
+
     const shouldUnlockEditorContent = Boolean(event?.metaKey || event?.ctrlKey);
     setIsEditorContentUnlocked(shouldUnlockEditorContent);
     setMode("editor");
@@ -4306,35 +4326,37 @@ export default function TriangleWordGamePrototypeFixed() {
                       <HelpCircle size={21} strokeWidth={1.5} />
                     </button>
 
-                    <div
-                      className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border px-1.5"
-                      style={{ borderColor: theme.controlBorder, background: theme.controlGroupBg }}
-                    >
-                      <button
-                        className="flex h-8 w-8 items-center justify-center rounded-full"
-                        type="button"
-                        onClick={enterPlayerMode}
-                        aria-label="Player mode"
-                        style={{
-                          background: mode === "player" ? theme.text : "transparent",
-                          color: mode === "player" ? theme.shellBg : theme.mutedText,
-                        }}
+                    {isLocalEditorEnabled ? (
+                      <div
+                        className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border px-1.5"
+                        style={{ borderColor: theme.controlBorder, background: theme.controlGroupBg }}
                       >
-                        <Gamepad2 size={18} strokeWidth={1.8} />
-                      </button>
-                      <button
-                        className="flex h-8 w-8 items-center justify-center rounded-full"
-                        type="button"
-                        onClick={enterEditorMode}
-                        aria-label="Editor mode"
-                        style={{
-                          background: mode === "editor" ? theme.text : "transparent",
-                          color: mode === "editor" ? theme.shellBg : theme.mutedText,
-                        }}
-                      >
-                        <Pencil size={18} strokeWidth={1.8} />
-                      </button>
-                    </div>
+                        <button
+                          className="flex h-8 w-8 items-center justify-center rounded-full"
+                          type="button"
+                          onClick={enterPlayerMode}
+                          aria-label="Player mode"
+                          style={{
+                            background: mode === "player" ? theme.text : "transparent",
+                            color: mode === "player" ? theme.shellBg : theme.mutedText,
+                          }}
+                        >
+                          <Gamepad2 size={18} strokeWidth={1.8} />
+                        </button>
+                        <button
+                          className="flex h-8 w-8 items-center justify-center rounded-full"
+                          type="button"
+                          onClick={enterEditorMode}
+                          aria-label="Editor mode"
+                          style={{
+                            background: mode === "editor" ? theme.text : "transparent",
+                            color: mode === "editor" ? theme.shellBg : theme.mutedText,
+                          }}
+                        >
+                          <Pencil size={18} strokeWidth={1.8} />
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -4448,27 +4470,29 @@ export default function TriangleWordGamePrototypeFixed() {
                     </div>
                   </div>
 
-                  <div
-                    className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border px-1.5"
-                    style={{ borderColor: theme.controlBorder, background: theme.controlGroupBg }}
-                  >
-                    <button
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${mode === "player" ? "bg-[#111] text-white" : "text-black/65"}`}
-                      type="button"
-                      onClick={enterPlayerMode}
-                      aria-label="Player mode"
+                  {isLocalEditorEnabled ? (
+                    <div
+                      className="inline-flex h-10 shrink-0 items-center gap-1 rounded-full border px-1.5"
+                      style={{ borderColor: theme.controlBorder, background: theme.controlGroupBg }}
                     >
-                      <Gamepad2 size={18} strokeWidth={1.8} />
-                    </button>
-                    <button
-                      className={`flex h-8 w-8 items-center justify-center rounded-full ${mode === "editor" ? "bg-[#111] text-white" : "text-black/65"}`}
-                      type="button"
-                      onClick={enterEditorMode}
-                      aria-label="Editor mode"
-                    >
-                      <Pencil size={18} strokeWidth={1.8} />
-                    </button>
-                  </div>
+                      <button
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${mode === "player" ? "bg-[#111] text-white" : "text-black/65"}`}
+                        type="button"
+                        onClick={enterPlayerMode}
+                        aria-label="Player mode"
+                      >
+                        <Gamepad2 size={18} strokeWidth={1.8} />
+                      </button>
+                      <button
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${mode === "editor" ? "bg-[#111] text-white" : "text-black/65"}`}
+                        type="button"
+                        onClick={enterEditorMode}
+                        aria-label="Editor mode"
+                      >
+                        <Pencil size={18} strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             )}

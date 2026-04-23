@@ -10,6 +10,8 @@ The latest GitHub Pages build is published here:
 
 https://beahleach.github.io/The-Tryptic/
 
+The deployed GitHub Pages app is player-only. Editor mode is intentionally limited to local runs on your own machine via `file:`, `localhost`, `127.0.0.1`, or `::1`.
+
 Repo-native How to Play:
 
 [HOW_TO_PLAY.md](HOW_TO_PLAY.md)
