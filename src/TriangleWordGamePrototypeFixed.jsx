@@ -14,24 +14,29 @@ import {
 } from "lucide-react";
 import { fetchPreferences, savePreferences } from "./preferencesApi";
 import trypticLogo from "./assets/tryptic-logo.png";
-import { bundledPuzzleFiles } from "./bundledPuzzles";
+import { bundledPresetPuzzleFiles, bundledTemplateSquares } from "./bundledPuzzles";
 
-function getBundledPuzzleRaw(fileName) {
-  const raw = bundledPuzzleFiles[fileName];
+function getBundledPresetPuzzleRaw(fileName) {
+  const raw = bundledPresetPuzzleFiles[fileName];
   if (!raw) {
     throw new Error(`Missing bundled puzzle file: ${fileName}`);
   }
   return raw;
 }
 
-const defaultPuzzleFileRaw = getBundledPuzzleRaw("SKIP_PAWN_STERN.try");
-const presetGuffawGadgetWartRaw = getBundledPuzzleRaw("GUFFAW_GADGET_WART.try");
-const presetScrubBleepStompRaw = getBundledPuzzleRaw("SCRUB_BLEEP_STOMP.try");
-const presetWaningWanderGatorRaw = getBundledPuzzleRaw("WANING_WANDER_GATOR.try");
-const presetBenchHalalBabelRaw = getBundledPuzzleRaw("BENCH_HALAL_BABEL.try");
-const templateFourFourFiveRaw = getBundledPuzzleRaw("4_4_5.try");
-const templateFiveFiveFiveRaw = getBundledPuzzleRaw("5_5_5.try");
-const templateSixSixFourRaw = getBundledPuzzleRaw("6_6_4.try");
+function getBundledTemplateSquares(fileName) {
+  const squares = bundledTemplateSquares[fileName];
+  if (!squares) {
+    throw new Error(`Missing bundled template file: ${fileName}`);
+  }
+  return squares;
+}
+
+const defaultPuzzleFileRaw = getBundledPresetPuzzleRaw("SKIP_PAWN_STERN.try");
+const presetGuffawGadgetWartRaw = getBundledPresetPuzzleRaw("GUFFAW_GADGET_WART.try");
+const presetScrubBleepStompRaw = getBundledPresetPuzzleRaw("SCRUB_BLEEP_STOMP.try");
+const presetWaningWanderGatorRaw = getBundledPresetPuzzleRaw("WANING_WANDER_GATOR.try");
+const presetBenchHalalBabelRaw = getBundledPresetPuzzleRaw("BENCH_HALAL_BABEL.try");
 
 const CELL_SIZE = 96;
 const BORDER_WIDTH = 6;
@@ -238,18 +243,9 @@ const DEFAULT_PUZZLE_NAME =
     ? DEFAULT_PUZZLE_FILE.name
     : "Untitled Puzzle";
 
-function parseTemplateSquares(raw) {
-  try {
-    const parsed = JSON.parse(raw);
-    return normalizePuzzleState(parsed?.puzzle ?? parsed).squares;
-  } catch {
-    return [];
-  }
-}
-
-const TRAVERSAL_LEFT_TEMPLATE_SQUARES = parseTemplateSquares(templateFiveFiveFiveRaw);
-const TRAVERSAL_RIGHT_TEMPLATE_SQUARES = parseTemplateSquares(templateSixSixFourRaw);
-const TRAVERSAL_INTERACTIVE_TEMPLATE_SQUARES = parseTemplateSquares(templateFourFourFiveRaw);
+const TRAVERSAL_LEFT_TEMPLATE_SQUARES = getBundledTemplateSquares("5_5_5.try");
+const TRAVERSAL_RIGHT_TEMPLATE_SQUARES = getBundledTemplateSquares("6_6_4.try");
+const TRAVERSAL_INTERACTIVE_TEMPLATE_SQUARES = getBundledTemplateSquares("4_4_5.try");
 
 let hintTooltipMeasurementContext = null;
 
@@ -1846,9 +1842,9 @@ export default function TriangleWordGamePrototypeFixed() {
   const [playerLetters, setPlayerLetters] = useState(() => buildBlankPlayerLetters(getInitialPuzzleState().squares));
   const [editingClueIndex, setEditingClueIndex] = useState(null);
   const [mode, setMode] = useState("player");
-  const [isEditorContentUnlocked, setIsEditorContentUnlocked] = useState(false);
   const [puzzlePresets, setPuzzlePresets] = useState(() => readPuzzlePresets());
   const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [showSettingsPresetMenu, setShowSettingsPresetMenu] = useState(false);
   const [showRevealMenu, setShowRevealMenu] = useState(false);
   const [showRevealConfirmModal, setShowRevealConfirmModal] = useState(false);
   const [skipRevealConfirm, setSkipRevealConfirm] = useState(() => {
@@ -1924,6 +1920,8 @@ export default function TriangleWordGamePrototypeFixed() {
   const [puzzleActionStatus, setPuzzleActionStatus] = useState("");
   const [isLoadingPuzzle, setIsLoadingPuzzle] = useState(false);
   const [isSettingPreset, setIsSettingPreset] = useState(false);
+  const availablePresetSlots = PUZZLE_PRESET_SLOTS.filter((slot) => puzzlePresets[slot.id]);
+  const isEditorContentLocked = false;
   const [sessionHydrated, setSessionHydrated] = useState(false);
   const sessionSnapshotRef = useRef(null);
   const skipSessionRestoreRef = useRef(false);
@@ -1980,7 +1978,6 @@ export default function TriangleWordGamePrototypeFixed() {
     !finishedState &&
     ((hasStartedGame && isPaused) || showStartModal);
   const isPlayerInputLocked = mode === "player" && shouldBlurPlayerContent;
-  const isEditorContentLocked = mode === "editor" && !isEditorContentUnlocked;
   const usePlayerAppearanceTheme = mode === "player" && isDarkMode;
   const theme = useMemo(
     () =>
@@ -2204,6 +2201,7 @@ export default function TriangleWordGamePrototypeFixed() {
         setShowHintMenu(false);
         setShowRevealMenu(false);
         setShowSettingsMenu(false);
+        setShowSettingsPresetMenu(false);
         setOpenHintSection(null);
         setActiveButton("help");
         setHoveredHintTooltip(null);
@@ -2387,6 +2385,7 @@ export default function TriangleWordGamePrototypeFixed() {
       setShowHintMenu(false);
       setShowRevealMenu(false);
       setShowSettingsMenu(false);
+      setShowSettingsPresetMenu(false);
       setOpenHintSection(null);
       setActiveButton(null);
       setHoveredHintTooltip(null);
@@ -2632,22 +2631,11 @@ export default function TriangleWordGamePrototypeFixed() {
     setTypingFlow(false);
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
+    setShowSettingsPresetMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
     setHoveredHintTooltip(null);
   }, [finishedState]);
-
-  useEffect(() => {
-    if (!isEditorContentLocked) return;
-    setActiveHintEditor(null);
-    setEditingClueIndex(null);
-    setSelectionBox(null);
-    setPendingDrag(null);
-    setDragState(null);
-    if (typeof document !== "undefined") {
-      document.activeElement?.blur?.();
-    }
-  }, [isEditorContentLocked]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -2666,6 +2654,7 @@ export default function TriangleWordGamePrototypeFixed() {
         setShowRevealMenu(false);
         setShowHintMenu(false);
         setShowSettingsMenu(false);
+        setShowSettingsPresetMenu(false);
         setShowPresetMenu(false);
         setOpenHintSection(null);
         setActiveButton(null);
@@ -3182,39 +3171,34 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const enterPlayerMode = () => {
-    setIsEditorContentUnlocked(false);
     setSelectedId(getPreferredSelectedSquareId(squares));
     setSelectedIds([]);
     setLastSide("base");
     setMode("player");
     setShowHowToPlay(false);
     setTypingFlow(false);
+    setShowSettingsPresetMenu(false);
   };
 
-  const enterEditorMode = (event) => {
+  const enterEditorMode = () => {
     if (!isLocalEditorEnabled) {
       enterPlayerMode();
       return;
     }
 
-    const shouldUnlockEditorContent = Boolean(event?.metaKey || event?.ctrlKey);
-    setIsEditorContentUnlocked(shouldUnlockEditorContent);
     setMode("editor");
     setShowHowToPlay(false);
     setTypingFlow(false);
     setShowHintMenu(false);
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
+    setShowSettingsPresetMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
-
-    if (!shouldUnlockEditorContent && typeof document !== "undefined") {
-      document.activeElement?.blur?.();
-    }
   };
 
   const applyLoadedPuzzle = (puzzle, nextPuzzleName = "Untitled Puzzle", options = {}) => {
-    const { unlockEditor = true } = options;
+    const { nextMode = "editor" } = options;
     const normalized = normalizePuzzleState(puzzle);
     setSquares(normalized.squares);
     setClues(normalized.clues);
@@ -3233,6 +3217,7 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowHintMenu(false);
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
+    setShowSettingsPresetMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
     setTypingFlow(false);
@@ -3243,8 +3228,7 @@ export default function TriangleWordGamePrototypeFixed() {
     setActiveHintEditor(null);
     setActiveClueIndex(0);
     setCurrentPuzzleName(nextPuzzleName);
-    setIsEditorContentUnlocked(unlockEditor);
-    setMode("editor");
+    setMode(nextMode === "editor" && isLocalEditorEnabled ? "editor" : "player");
   };
 
   const readPuzzleFromFile = async (file) => {
@@ -3280,18 +3264,46 @@ export default function TriangleWordGamePrototypeFixed() {
     );
   };
 
-  const handlePresetSlotClick = async (slot) => {
+  const handlePresetLoad = (slot) => {
+    const preset = puzzlePresets[slot.id];
+    setShowSettingsPresetMenu(false);
+    setShowSettingsMenu(false);
+    setActiveButton(null);
+    if (!preset) return;
+
+    const normalized = normalizePuzzleState(preset.puzzle);
+    setSquares(normalized.squares);
+    setClues(normalized.clues);
+    setSelectedId(getPreferredSelectedSquareId(normalized.squares));
+    setSelectedIds([]);
+    setLastSide("base");
+    setPlayerLetters(buildBlankPlayerLetters(normalized.squares));
+    setSeconds(0);
+    setHasStartedGame(false);
+    setShowStartModal(true);
+    setIsPaused(false);
+    setShowSolvedModal(false);
+    setFinishedState(null);
+    setAssistLog([]);
+    setFinishAssistLog([]);
+    setShowHowToPlay(false);
+    setShowHintMenu(false);
+    setShowRevealMenu(false);
+    setOpenHintSection(null);
+    setTypingFlow(false);
+    setSelectionBox(null);
+    setPendingDrag(null);
+    setDragState(null);
+    setHoveredHintTooltip(null);
+    setActiveHintEditor(null);
+    setActiveClueIndex(0);
+    setCurrentPuzzleName(preset.name || slot.label);
+    setMode("player");
+    setPuzzleActionStatus(`Loaded ${slot.label}.`);
+  };
+
+  const handlePresetSet = async (slot) => {
     setShowPresetMenu(false);
-
-    if (isEditorContentLocked) {
-      const preset = puzzlePresets[slot.id];
-      if (!preset) return;
-
-      applyLoadedPuzzle(preset.puzzle, preset.name, { unlockEditor: false });
-      setPuzzleActionStatus(`Loaded ${slot.label}.`);
-      return;
-    }
-
     if (supportsNativeFilePickers()) {
       setIsSettingPreset(true);
       try {
@@ -3944,6 +3956,7 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowHintMenu(false);
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
+    setShowSettingsPresetMenu(false);
     setOpenHintSection(null);
     setActiveButton("help");
     setHoveredHintTooltip(null);
@@ -4017,6 +4030,7 @@ export default function TriangleWordGamePrototypeFixed() {
                         setShowSettingsMenu((prev) => {
                           const next = !prev;
                           setActiveButton(next ? "settings" : null);
+                          setShowSettingsPresetMenu(false);
                           return next;
                         });
                         setShowHintMenu(false);
@@ -4031,7 +4045,7 @@ export default function TriangleWordGamePrototypeFixed() {
                     </button>
                     {showSettingsMenu && (
                       <div
-                        className="absolute left-0 top-[calc(100%+10px)] z-40 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+                        className="absolute left-0 top-[calc(100%+10px)] z-40 w-[220px] overflow-visible rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
                         style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
                       >
                         <button
@@ -4064,7 +4078,9 @@ export default function TriangleWordGamePrototypeFixed() {
                           <button
                             key={label}
                             type="button"
-                            onClick={() => {}}
+                            onClick={() => {
+                              setShowSettingsPresetMenu(false);
+                            }}
                             className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
                             style={{ color: theme.text, background: "transparent" }}
                             onMouseEnter={(event) => {
@@ -4077,6 +4093,58 @@ export default function TriangleWordGamePrototypeFixed() {
                             {label}
                           </button>
                         ))}
+                        {isLocalEditorEnabled ? (
+                          <>
+                            <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
+                            <div className="relative">
+                              <button
+                                type="button"
+                                onClick={() => setShowSettingsPresetMenu((prev) => !prev)}
+                                className="flex w-full items-center justify-between px-4 py-3 text-left text-[16px] transition-colors"
+                                style={{
+                                  color: theme.text,
+                                  background: showSettingsPresetMenu ? theme.menuHoverBg : "transparent",
+                                }}
+                                onMouseEnter={(event) => {
+                                  if (!showSettingsPresetMenu) {
+                                    event.currentTarget.style.background = theme.menuHoverBg;
+                                  }
+                                }}
+                                onMouseLeave={(event) => {
+                                  if (!showSettingsPresetMenu) {
+                                    event.currentTarget.style.background = "transparent";
+                                  }
+                                }}
+                              >
+                                <span>Load preset (playtest)</span>
+                              </button>
+                              {showSettingsPresetMenu && (
+                                <div
+                                  className="absolute left-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
+                                  style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
+                                >
+                                  {availablePresetSlots.map((slot) => (
+                                    <button
+                                      key={slot.id}
+                                      type="button"
+                                      onClick={() => handlePresetLoad(slot)}
+                                      className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
+                                      style={{ color: theme.text, background: "transparent" }}
+                                      onMouseEnter={(event) => {
+                                        event.currentTarget.style.background = theme.menuHoverBg;
+                                      }}
+                                      onMouseLeave={(event) => {
+                                        event.currentTarget.style.background = "transparent";
+                                      }}
+                                    >
+                                      {slot.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : null}
                       </div>
                     )}
                   </div>
@@ -4426,33 +4494,28 @@ export default function TriangleWordGamePrototypeFixed() {
                           onClick={() => setShowPresetMenu((prev) => !prev)}
                           disabled={isSettingPreset}
                           className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium disabled:opacity-60"
-                          style={
-                            isEditorContentLocked
-                              ? { background: theme.clueActiveBg, borderColor: theme.clueActiveBg, color: "#07140f" }
-                              : undefined
-                          }
                         >
                           <Triangle size={15} strokeWidth={1.8} />
-                          {isEditorContentLocked ? "Load Preset" : "Set Preset"}
+                          Set Preset
                         </button>
 
                         {showPresetMenu && (
                           <div
-                            className={`${isEditorContentLocked ? "right-0 w-[190px]" : "left-0 w-[310px]"} absolute top-[calc(100%+8px)] z-50 overflow-hidden rounded-[16px] border border-[#d8d8d8] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)]`}
+                            className="absolute left-0 top-[calc(100%+8px)] z-50 w-[310px] overflow-hidden rounded-[16px] border border-[#d8d8d8] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
                           >
-                            {PUZZLE_PRESET_SLOTS.filter((slot) => !isEditorContentLocked || puzzlePresets[slot.id]).map((slot) => {
+                            {PUZZLE_PRESET_SLOTS.map((slot) => {
                               const preset = puzzlePresets[slot.id];
                               return (
                                 <button
                                   key={slot.id}
                                   type="button"
-                                  onClick={() => handlePresetSlotClick(slot)}
-                                  className={`${isEditorContentLocked ? "block whitespace-normal break-words" : "flex items-baseline gap-2"} w-full cursor-pointer px-4 py-3 text-left text-[14px] transition-colors hover:bg-[#f3f3f3]`}
+                                  onClick={() => handlePresetSet(slot)}
+                                  className="flex w-full cursor-pointer items-baseline gap-2 px-4 py-3 text-left text-[14px] transition-colors hover:bg-[#f3f3f3]"
                                 >
-                                  <span className={`${isEditorContentLocked ? "block" : "shrink-0"} font-medium text-[#111111]`}>
+                                  <span className="shrink-0 font-medium text-[#111111]">
                                     {slot.label}
                                   </span>
-                                  {!isEditorContentLocked && preset?.fileName ? (
+                                  {preset?.fileName ? (
                                     <span className="min-w-0 truncate text-[12px] text-black/40">{preset.fileName}</span>
                                   ) : null}
                                 </button>
