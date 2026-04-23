@@ -207,7 +207,7 @@ const GAME_SESSION_SCHEMA_VERSION = 1;
 const DEFAULT_TRIANGLE_DEBUT_HOUR = 6;
 const MAX_TRIANGLE_DEBUT_DURATION_MS = 24 * 60 * 60 * 1000;
 const PUZZLE_PRESET_SLOTS = [
-  { id: "triangle-1", label: "Triangle 1 (Default)" },
+  { id: "triangle-1", label: "Triangle 1" },
   { id: "triangle-2", label: "Triangle 2" },
   { id: "triangle-3", label: "Triangle 3" },
   { id: "triangle-4", label: "Triangle 4" },
@@ -2029,6 +2029,7 @@ export default function TriangleWordGamePrototypeFixed() {
   const trashRef = useRef(null);
   const squareRefs = useRef({});
   const loadPuzzleInputRef = useRef(null);
+  const suppressBannerDropdownCloseRef = useRef(false);
   const [boardScale, setBoardScale] = useState(1);
   const [editorBoardSize, setEditorBoardSize] = useState({ width: BOARD_WIDTH, height: BOARD_HEIGHT });
   const editorGridMaxX = Math.max(
@@ -2090,6 +2091,9 @@ export default function TriangleWordGamePrototypeFixed() {
     () => getActiveTriangleDebut(scheduledTriangleDebuts),
     [scheduledTriangleDebuts]
   );
+  const defaultSourceLabel = activeTriangleDebut
+    ? `Default live source: debut "${activeTriangleDebut.name}"`
+    : `Default live source: ${PUZZLE_PRESET_SLOTS[0].label}`;
   const selectedTriangleDebut = useMemo(
     () => scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId) || null,
     [scheduledTriangleDebuts, selectedDebutId]
@@ -2566,6 +2570,7 @@ export default function TriangleWordGamePrototypeFixed() {
     };
 
     const pauseFromFocusLoss = () => {
+      if (suppressBannerDropdownCloseRef.current) return;
       closeBannerDropdowns();
       setIsPaused((prev) => {
         if (prev || !hasStartedGame || mode === "editor" || finishedState) return prev;
@@ -3513,6 +3518,7 @@ export default function TriangleWordGamePrototypeFixed() {
     }
 
     try {
+      suppressBannerDropdownCloseRef.current = true;
       const [handle] = await window.showOpenFilePicker({
         multiple: false,
         types: [
@@ -3542,6 +3548,10 @@ export default function TriangleWordGamePrototypeFixed() {
       if (!isAbortError(error)) {
         setPuzzleActionStatus("Could not load that debut file. Choose a .try file.");
       }
+    } finally {
+      window.setTimeout(() => {
+        suppressBannerDropdownCloseRef.current = false;
+      }, 0);
     }
   };
 
@@ -4382,7 +4392,7 @@ export default function TriangleWordGamePrototypeFixed() {
                           </span>
                         </button>
                         <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
-                        {["Contact me", "Support The Tryptic :)", "Report a bug"].map((label) => (
+                        {["Contact me", "Support The Tryptic :)"].map((label) => (
                           <button
                             key={label}
                             type="button"
@@ -4993,6 +5003,9 @@ export default function TriangleWordGamePrototypeFixed() {
                           {puzzleActionStatus}
                         </div>
                       )}
+                      <div className="text-[13px] text-black/50">
+                        {defaultSourceLabel}
+                      </div>
                     </div>
                   </div>
 
