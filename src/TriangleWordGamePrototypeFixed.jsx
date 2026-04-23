@@ -450,6 +450,11 @@ function supportsNativeFilePickers() {
   return typeof window !== "undefined" && "showSaveFilePicker" in window && "showOpenFilePicker" in window;
 }
 
+function shouldOpenHowToPlayFromUrl() {
+  if (typeof window === "undefined") return false;
+  return window.location.hash === "#how-to-play";
+}
+
 function readStoredBoolean(key) {
   if (!ENABLE_PREFERENCE_MEMORY) return false;
   if (typeof window === "undefined") return false;
@@ -1827,7 +1832,7 @@ export default function TriangleWordGamePrototypeFixed() {
   const [pendingHintTarget, setPendingHintTarget] = useState(null);
   const [hoveredHintTooltip, setHoveredHintTooltip] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(() => shouldOpenHowToPlayFromUrl());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
     if (window.localStorage.getItem(DARK_MODE_DEFAULT_RESET_KEY) !== "true") {
@@ -2151,6 +2156,26 @@ export default function TriangleWordGamePrototypeFixed() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(DARK_MODE_STORAGE_KEY, String(isDarkMode));
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const syncHowToPlayFromHash = () => {
+      if (shouldOpenHowToPlayFromUrl()) {
+        setShowHowToPlay(true);
+        setShowHintMenu(false);
+        setShowRevealMenu(false);
+        setShowSettingsMenu(false);
+        setOpenHintSection(null);
+        setActiveButton("help");
+        setHoveredHintTooltip(null);
+      }
+    };
+
+    syncHowToPlayFromHash();
+    window.addEventListener("hashchange", syncHowToPlayFromHash);
+    return () => window.removeEventListener("hashchange", syncHowToPlayFromHash);
+  }, []);
 
   useEffect(() => {
     if (!ENABLE_PREFERENCE_MEMORY) {
@@ -3869,6 +3894,9 @@ export default function TriangleWordGamePrototypeFixed() {
 
   const openHowToPlay = () => {
     wasPausedBeforeHowToPlayRef.current = isPaused || !hasStartedGame;
+    if (typeof window !== "undefined" && window.location.hash !== "#how-to-play") {
+      window.history.pushState(null, "", "#how-to-play");
+    }
     setShowHowToPlay(true);
     setShowHintMenu(false);
     setShowRevealMenu(false);
@@ -3883,6 +3911,9 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const returnToGame = () => {
+    if (typeof window !== "undefined" && window.location.hash === "#how-to-play") {
+      window.history.pushState(null, "", window.location.pathname + window.location.search);
+    }
     setShowHowToPlay(false);
     setActiveButton(null);
 

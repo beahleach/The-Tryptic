@@ -10,6 +10,10 @@ The latest GitHub Pages build is published here:
 
 https://beahleach.github.io/The-Tryptic/
 
+Interactive How to Play:
+
+https://beahleach.github.io/The-Tryptic/#how-to-play
+
 The app is currently in beta, so layout, puzzle content, and editor tools may still change.
 
 ## Run Locally
