@@ -183,6 +183,7 @@ const HIGHLIGHT_COLORS = Object.fromEntries(
 );
 const PLAYER_BANNER_TARGET_BROWSER_ZOOM = 0.9;
 const DARK_MODE_STORAGE_KEY = "triangle-word-game-dark-mode";
+const DARK_MODE_DEFAULT_RESET_KEY = "triangle-word-game-dark-mode-default-reset-v1";
 const SKIP_HINT_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-hint-confirm";
 const SKIP_REVEAL_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-reveal-confirm";
 const GAME_SESSION_STORAGE_KEY = "triangle-word-game-session";
@@ -1829,6 +1830,11 @@ export default function TriangleWordGamePrototypeFixed() {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
+    if (window.localStorage.getItem(DARK_MODE_DEFAULT_RESET_KEY) !== "true") {
+      window.localStorage.setItem(DARK_MODE_STORAGE_KEY, "false");
+      window.localStorage.setItem(DARK_MODE_DEFAULT_RESET_KEY, "true");
+      return false;
+    }
     return window.localStorage.getItem(DARK_MODE_STORAGE_KEY) === "true";
   });
   const [showSolvedModal, setShowSolvedModal] = useState(false);
