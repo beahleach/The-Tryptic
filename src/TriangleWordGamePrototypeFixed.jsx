@@ -2185,6 +2185,7 @@ export default function TriangleWordGamePrototypeFixed() {
       setShowHowToPlay(shouldOpen);
 
       if (shouldOpen) {
+        setMode("player");
         setShowHintMenu(false);
         setShowRevealMenu(false);
         setShowSettingsMenu(false);
@@ -2196,6 +2197,7 @@ export default function TriangleWordGamePrototypeFixed() {
       }
     };
 
+    syncFromLocation();
     window.addEventListener("popstate", syncFromLocation);
     return () => window.removeEventListener("popstate", syncFromLocation);
   }, []);
