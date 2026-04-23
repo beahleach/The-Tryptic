@@ -2,6 +2,10 @@
 
 ![Status: Beta](https://img.shields.io/badge/status-beta-7c3aed)
 
+Interactive How to Play page:
+
+[https://beahleach.github.io/The-Tryptic/?view=how-to-play](https://beahleach.github.io/The-Tryptic/?view=how-to-play)
+
 ## How to Triumph the Tryptic (How to Play/ Solving)
 
 The Tryptic is a triangular cryptic-style daily puzzle game.

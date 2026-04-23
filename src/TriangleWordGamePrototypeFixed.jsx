@@ -450,6 +450,31 @@ function supportsNativeFilePickers() {
   return typeof window !== "undefined" && "showSaveFilePicker" in window && "showOpenFilePicker" in window;
 }
 
+function shouldOpenHowToPlayFromUrl() {
+  if (typeof window === "undefined") return false;
+  const searchParams = new URLSearchParams(window.location.search);
+  return searchParams.get("view") === "how-to-play";
+}
+
+function syncHowToPlayUrl(isOpen) {
+  if (typeof window === "undefined") return;
+
+  const url = new URL(window.location.href);
+
+  if (isOpen) {
+    url.searchParams.set("view", "how-to-play");
+  } else {
+    url.searchParams.delete("view");
+  }
+
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+  const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+  if (nextUrl !== currentUrl) {
+    window.history.pushState(null, "", nextUrl);
+  }
+}
+
 function readStoredBoolean(key) {
   if (!ENABLE_PREFERENCE_MEMORY) return false;
   if (typeof window === "undefined") return false;
@@ -1827,7 +1852,7 @@ export default function TriangleWordGamePrototypeFixed() {
   const [pendingHintTarget, setPendingHintTarget] = useState(null);
   const [hoveredHintTooltip, setHoveredHintTooltip] = useState(null);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
-  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(() => shouldOpenHowToPlayFromUrl());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === "undefined") return false;
     if (window.localStorage.getItem(DARK_MODE_DEFAULT_RESET_KEY) !== "true") {
@@ -2151,6 +2176,29 @@ export default function TriangleWordGamePrototypeFixed() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(DARK_MODE_STORAGE_KEY, String(isDarkMode));
   }, [isDarkMode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const syncFromLocation = () => {
+      const shouldOpen = shouldOpenHowToPlayFromUrl();
+      setShowHowToPlay(shouldOpen);
+
+      if (shouldOpen) {
+        setShowHintMenu(false);
+        setShowRevealMenu(false);
+        setShowSettingsMenu(false);
+        setOpenHintSection(null);
+        setActiveButton("help");
+        setHoveredHintTooltip(null);
+      } else {
+        setActiveButton(null);
+      }
+    };
+
+    window.addEventListener("popstate", syncFromLocation);
+    return () => window.removeEventListener("popstate", syncFromLocation);
+  }, []);
 
   useEffect(() => {
     if (!ENABLE_PREFERENCE_MEMORY) {
@@ -3869,6 +3917,7 @@ export default function TriangleWordGamePrototypeFixed() {
 
   const openHowToPlay = () => {
     wasPausedBeforeHowToPlayRef.current = isPaused || !hasStartedGame;
+    syncHowToPlayUrl(true);
     setShowHowToPlay(true);
     setShowHintMenu(false);
     setShowRevealMenu(false);
@@ -3883,6 +3932,7 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const returnToGame = () => {
+    syncHowToPlayUrl(false);
     setShowHowToPlay(false);
     setActiveButton(null);
 
