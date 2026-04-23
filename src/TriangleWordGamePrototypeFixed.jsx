@@ -4392,25 +4392,25 @@ export default function TriangleWordGamePrototypeFixed() {
                           </span>
                         </button>
                         <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
-                        {["Contact me", "Support The Tryptic :)"].map((label) => (
-                          <button
-                            key={label}
-                            type="button"
-                            onClick={() => {
-                              setShowSettingsPresetMenu(false);
-                            }}
-                            className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
-                            style={{ color: theme.text, background: "transparent" }}
-                            onMouseEnter={(event) => {
-                              event.currentTarget.style.background = theme.menuHoverBg;
-                            }}
-                            onMouseLeave={(event) => {
-                              event.currentTarget.style.background = "transparent";
-                            }}
-                          >
-                            {label}
-                          </button>
-                        ))}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowSettingsPresetMenu(false);
+                            setShowSettingsMenu(false);
+                            setActiveButton(null);
+                            window.location.href = "mailto:thetryptic@gmail.com";
+                          }}
+                          className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
+                          style={{ color: theme.text, background: "transparent" }}
+                          onMouseEnter={(event) => {
+                            event.currentTarget.style.background = theme.menuHoverBg;
+                          }}
+                          onMouseLeave={(event) => {
+                            event.currentTarget.style.background = "transparent";
+                          }}
+                        >
+                          Contact me
+                        </button>
                         <>
                           <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
                           <div className="relative">
