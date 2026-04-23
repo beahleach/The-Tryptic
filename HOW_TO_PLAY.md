@@ -2,68 +2,65 @@
 
 ![Status: Beta](https://img.shields.io/badge/status-beta-7c3aed)
 
-The Tryptic is a triangular cryptic-style word puzzle game. Each puzzle has three clue answers arranged around a triangle: the left side, right side, and base.
+## How to Triumph the Tryptic (How to Play/ Solving)
 
-## Triangle Basics
+The Tryptic is a triangular cryptic-style daily puzzle game.
 
-Every Tryptic has three sides:
+### Clues
 
-- **Left**
-- **Right**
-- **Base**
+Each clue has three parts.
 
-Triangle sides read left to right, or top to bottom when a side is vertical.
+1. `WORDPLAY` which tells you how to play with the
+2. `FODDER` to transform it into a synonym for the
+3. `DEFINITION`
 
-Each square belongs to one or more sides. Corner squares connect sides, so a corner letter can matter for multiple answers.
+### Types of wordplay
 
-## Moving Around
+There is often multiple wordplay in a clue (and sometimes one piece of wordplay is doing multiple things), but here is a list of some basics.
 
-You can move through the triangle by:
+- **Anagram:** rearrange fodder letters
+- **Selection:** choose a specific fodder letter(s)
+- **Deletion:** remove a letter(s) from fodder
+- **Insertion:** put a letter(s) into fodder
+- **Placement:** tells you how to situate fodder
+- **Hidden:** find a partial answer/full answer hidden in fodder
+- **Container:** wrap fodder around other fodder
+- **Reversal:** reverse fodder order
+- **Homophone:** fodder (or its substitution) should be replaced by a sound-alike
+- **Substitution:** fodder will sometimes need to be replaced by a single letter, multiletter, or word equivalent (e.g. roman numerals, NATO alphabet, periodic table, pop culture references, regular synonyms, etc...)
 
-- using the arrow keys
-- typing letters
-- clicking any square
-- clicking a clue box to jump to that side's starting corner
+Cryptic wordplay can have a learning curve. Consult the hint summary after solving/revealing the puzzle if you're feeling lost.
 
-## Clues
+### Scoring
 
-Each clue has three parts:
+- `⭐ ⭐ ⭐` The elusive tri-star for those who solved with no help under two minutes!
+- `⭐` A gold star for those who solved with no help.
+- `🔍 💡` Magnifying glasses/ lightbulbs mark reveals/hints used while solving.
 
-- **1. Wordplay:** tells you what operation to perform.
-- **2. Fodder:** gives you the letters, words, or references to operate on.
-- **3. Definition:** tells you what the answer means.
+## How to Traverse the Triangle (Controls/ Navigation)
 
-The answer produced by the wordplay should match the definition.
+### Triangle basics
 
-## Common Wordplay Types
+Triangles always have a **left**, **right**, and **base** side.
 
-- **Anagram:** rearrange fodder letters.
-- **Selection:** choose specific fodder letters.
-- **Deletion:** remove letters from fodder.
-- **Insertion:** put letters into other fodder.
-- **Placement:** position fodder in a specific way.
-- **Hidden:** find an answer hidden inside fodder.
-- **Container:** wrap fodder around other fodder.
-- **Reversal:** reverse fodder order.
-- **Homophone:** use a sound-alike.
-- **Substitution:** replace fodder with an equivalent, such as a roman numeral, NATO alphabet letter, periodic-table symbol, pop-culture reference, or synonym.
+Triangle sides always **read left to right**, or **top to bottom** if vertical.
 
-There is often more than one piece of wordplay in a clue, and sometimes one piece of wordplay does multiple things.
+### Moving around the triangle
 
-## Hints And Reveals
+1. Arrow keys
+2. Typing
+3. Click on any square
+4. Click on any clue box (this will send you to a side's starting corner)
 
-The app can reveal different levels of help:
+### Clue boxes
 
-- **Hint** can reveal wordplay, fodder, or definition help for a clue.
-- **Reveal** can show one square, one side, or the whole puzzle.
-- Highlighted clue text can include additional hint information in the interactive app.
+Revealing hints highlights wordplay in white, highlights fodder in green, and underlines definitions inside clue boxes.
 
-## Scoring
+**Hovering** over highlighted/ underlined clue text shows additional hint information.
 
-- **Triple star:** solved with no help in under two minutes.
-- **Gold star:** solved with no help.
-- **Hint/reveal markers:** show when help was used.
+### Banner buttons
 
-## Editor Mode
-
-The app includes an editor for loading, saving, and shaping `.try` puzzle files. The beta build includes embedded sample puzzles, so the public app does not need the full local puzzle library.
+- **Pause/Play** starts, pauses, or resumes the game timer.
+- **Hint** reveals wordplay, fodder, or definition help for a clue.
+- **Clear** wipes your current entries so you can restart the puzzle.
+- **Reveal** can show a square, a side, or the whole puzzle when you are stuck.
