@@ -14,10 +14,6 @@ Repo-native How to Play:
 
 [HOW_TO_PLAY.md](HOW_TO_PLAY.md)
 
-Interactive in-app How to Play:
-
-https://beahleach.github.io/The-Tryptic/#how-to-play
-
 The app is currently in beta, so layout, puzzle content, and editor tools may still change.
 
 ## Run Locally

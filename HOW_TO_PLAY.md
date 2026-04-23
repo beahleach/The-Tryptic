@@ -4,10 +4,6 @@
 
 The Tryptic is a triangular cryptic-style word puzzle game. Each puzzle has three clue answers arranged around a triangle: the left side, right side, and base.
 
-For the interactive in-app version, open:
-
-https://beahleach.github.io/The-Tryptic/#how-to-play
-
 ## Triangle Basics
 
 Every Tryptic has three sides:
@@ -33,9 +29,9 @@ You can move through the triangle by:
 
 Each clue has three parts:
 
-1. **Wordplay** tells you what operation to perform.
-2. **Fodder** gives you the letters, words, or references to operate on.
-3. **Definition** tells you what the answer means.
+- **1. Wordplay:** tells you what operation to perform.
+- **2. Fodder:** gives you the letters, words, or references to operate on.
+- **3. Definition:** tells you what the answer means.
 
 The answer produced by the wordplay should match the definition.
 
