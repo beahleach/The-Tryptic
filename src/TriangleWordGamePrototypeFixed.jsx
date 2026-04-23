@@ -14,9 +14,11 @@ import {
   Triangle,
 } from "lucide-react";
 import { fetchPreferences, savePreferences } from "./preferencesApi";
+import { fetchPuzzlePresets, savePuzzlePresets } from "./puzzlePresetApi";
 import { fetchTriangleDebuts, saveTriangleDebuts } from "./triangleDebutApi";
 import trypticLogo from "./assets/tryptic-logo.png";
 import { bundledPresetPuzzleFiles, bundledTemplateSquares } from "./bundledPuzzles";
+import bundledPuzzlePresets from "./puzzlePresets.json";
 import bundledTriangleDebuts from "./triangleDebuts.json";
 
 function getBundledPresetPuzzleRaw(fileName) {
@@ -749,6 +751,12 @@ const BUILT_IN_PUZZLE_PRESETS = Object.fromEntries(
   )
 );
 
+const BUNDLED_REPO_PUZZLE_PRESETS = Object.fromEntries(
+  PUZZLE_PRESET_SLOTS.map((slot) => [slot.id, sanitizePuzzlePresetEntry(bundledPuzzlePresets?.[slot.id])]).filter(
+    ([, preset]) => Boolean(preset)
+  )
+);
+
 function readStoredPuzzlePresets() {
   if (typeof window === "undefined") return {};
 
@@ -769,6 +777,7 @@ function readStoredPuzzlePresets() {
 function readPuzzlePresets() {
   return {
     ...BUILT_IN_PUZZLE_PRESETS,
+    ...BUNDLED_REPO_PUZZLE_PRESETS,
     ...readStoredPuzzlePresets(),
   };
 }
@@ -2412,6 +2421,32 @@ export default function TriangleWordGamePrototypeFixed() {
 
     let cancelled = false;
 
+    const syncPuzzlePresetsFromBackend = async () => {
+      try {
+        const entries = await fetchPuzzlePresets();
+        if (cancelled || !entries || typeof entries !== "object") return;
+
+        const sanitized = Object.fromEntries(
+          PUZZLE_PRESET_SLOTS.map((slot) => [slot.id, sanitizePuzzlePresetEntry(entries[slot.id])]).filter(
+            ([, preset]) => Boolean(preset)
+          )
+        );
+
+        setPuzzlePresets((prev) => ({
+          ...BUILT_IN_PUZZLE_PRESETS,
+          ...BUNDLED_REPO_PUZZLE_PRESETS,
+          ...prev,
+          ...sanitized,
+        }));
+        writeStoredPuzzlePresets({
+          ...readStoredPuzzlePresets(),
+          ...sanitized,
+        });
+      } catch {
+        // Keep bundled/local preset data if the backend is unavailable.
+      }
+    };
+
     const syncTriangleDebutsFromBackend = async () => {
       try {
         const entries = await fetchTriangleDebuts();
@@ -2429,6 +2464,7 @@ export default function TriangleWordGamePrototypeFixed() {
       }
     };
 
+    syncPuzzlePresetsFromBackend();
     syncTriangleDebutsFromBackend();
 
     return () => {
@@ -3444,11 +3480,16 @@ export default function TriangleWordGamePrototypeFixed() {
     const nextPresets = { ...puzzlePresets, [slot.id]: preset };
     setPuzzlePresets(nextPresets);
     writeStoredPuzzlePresets(nextPresets);
-    setPuzzleActionStatus(
-      slot.id === PUZZLE_PRESET_SLOTS[0].id
-        ? `${slot.label} set to ${loaded.fileName}. This is the game default whenever no triangle debut is active.`
-        : `${slot.label} set to ${loaded.fileName}.`
-    );
+    try {
+      const result = await savePuzzlePresets(nextPresets);
+      const prefix =
+        slot.id === PUZZLE_PRESET_SLOTS[0].id
+          ? `${slot.label} set to ${loaded.fileName}. This is the game default whenever no triangle debut is active.`
+          : `${slot.label} set to ${loaded.fileName}.`;
+      setPuzzleActionStatus(result?.publish?.ok === false ? `${prefix} ${result.publish.message}` : prefix);
+    } catch {
+      setPuzzleActionStatus("Saved the preset locally in this session, but could not write the repo-backed preset config.");
+    }
   };
 
   const handlePresetLoad = (slot) => {
@@ -3609,14 +3650,44 @@ export default function TriangleWordGamePrototypeFixed() {
 
     const removedEntry = scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId);
     const nextDebuts = scheduledTriangleDebuts.filter((entry) => entry.id !== selectedDebutId);
+    const nextActiveDebut = getActiveTriangleDebut(nextDebuts);
+    const removedWasLive = Boolean(
+      removedEntry &&
+        new Date(removedEntry.startsAt).getTime() <= Date.now() &&
+        Date.now() < new Date(removedEntry.endsAt).getTime()
+    );
     setScheduledTriangleDebuts(nextDebuts);
     resetDebutForm();
+    if (removedWasLive) {
+      if (nextActiveDebut) {
+        applyLoadedPuzzle(nextActiveDebut.puzzle, nextActiveDebut.name || "Untitled Puzzle", {
+          nextMode: "editor",
+          preserveDebutMenu: true,
+        });
+      } else {
+        const fallbackPreset = puzzlePresets[PUZZLE_PRESET_SLOTS[0].id];
+        if (fallbackPreset) {
+          applyLoadedPuzzle(fallbackPreset.puzzle, fallbackPreset.name || PUZZLE_PRESET_SLOTS[0].label, {
+            nextMode: "editor",
+            preserveDebutMenu: true,
+          });
+        }
+      }
+    }
     try {
       const result = await saveTriangleDebuts(nextDebuts);
-      const prefix = `Deleted scheduled debut ${removedEntry?.name || ""}`.trim();
+      const prefix = removedWasLive
+        ? nextActiveDebut
+          ? `Deleted live debut ${removedEntry?.name || ""}. ${nextActiveDebut.name} is now the active default.`
+          : `Deleted live debut ${removedEntry?.name || ""}. ${PUZZLE_PRESET_SLOTS[0].label} is now the active default.`
+        : `Deleted scheduled debut ${removedEntry?.name || ""}`.trim();
       setPuzzleActionStatus(result?.publish?.ok === false ? `${prefix}. ${result.publish.message}` : prefix);
     } catch {
-      setPuzzleActionStatus("Removed the debut locally in this session, but could not write the repo-backed debut schedule.");
+      setPuzzleActionStatus(
+        removedWasLive
+          ? "Removed the live debut locally in this session, but could not write the repo-backed debut schedule."
+          : "Removed the debut locally in this session, but could not write the repo-backed debut schedule."
+      );
     }
   };
 
@@ -4963,6 +5034,21 @@ export default function TriangleWordGamePrototypeFixed() {
                                         new Date(entry.startsAt).getTime() <= Date.now() &&
                                         Date.now() < new Date(entry.endsAt).getTime();
                                       const isSelected = entry.id === selectedDebutId;
+                                      const borderColor = isActive
+                                        ? isSelected
+                                          ? "#15803d"
+                                          : "#86efac"
+                                        : isSelected
+                                          ? "#111111"
+                                          : "#d8d8d8";
+                                      const backgroundColor = isActive
+                                        ? isSelected
+                                          ? "#dcfce7"
+                                          : "#f0fdf4"
+                                        : isSelected
+                                          ? "#f7f7f7"
+                                          : "#ffffff";
+                                      const badgeColor = isActive ? "#15803d" : "rgba(0,0,0,0.45)";
                                       return (
                                         <button
                                           key={entry.id}
@@ -4970,13 +5056,16 @@ export default function TriangleWordGamePrototypeFixed() {
                                           onClick={() => handleDebutItemSelect(entry)}
                                           className="block w-full rounded-[14px] border px-3 py-3 text-left transition-colors"
                                           style={{
-                                            borderColor: isSelected ? "#111111" : "#d8d8d8",
-                                            background: isSelected ? "#f7f7f7" : "#ffffff",
+                                            borderColor,
+                                            background: backgroundColor,
                                           }}
                                         >
                                           <div className="flex items-center justify-between gap-3 text-[13px] font-semibold text-[#111111]">
                                             <span className="truncate">{entry.name}</span>
-                                            <span className="shrink-0 text-[11px] uppercase tracking-[0.08em] text-black/45">
+                                            <span
+                                              className="shrink-0 text-[11px] uppercase tracking-[0.08em]"
+                                              style={{ color: badgeColor }}
+                                            >
                                               {isActive ? "Live" : "Scheduled"}
                                             </span>
                                           </div>

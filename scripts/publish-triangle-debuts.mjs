@@ -10,6 +10,7 @@ const execFileAsync = promisify(execFile);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.join(__dirname, "..");
+const SOURCE_PRESETS_PATH = path.join(REPO_ROOT, "src", "puzzlePresets.json");
 const SOURCE_DEBUTS_PATH = path.join(REPO_ROOT, "src", "triangleDebuts.json");
 const REMOTE_REPO = "git@github.com:beahleach/The-Tryptic.git";
 
@@ -27,21 +28,25 @@ async function main() {
 
   try {
     await runGit(["clone", "--depth", "1", REMOTE_REPO, cloneDir]);
+    await cp(SOURCE_PRESETS_PATH, path.join(cloneDir, "src", "puzzlePresets.json"));
     await cp(SOURCE_DEBUTS_PATH, path.join(cloneDir, "src", "triangleDebuts.json"));
 
-    const { stdout: status } = await runGit(["status", "--porcelain", "--", "src/triangleDebuts.json"], {
-      cwd: cloneDir,
-    });
+    const { stdout: status } = await runGit(
+      ["status", "--porcelain", "--", "src/puzzlePresets.json", "src/triangleDebuts.json"],
+      {
+        cwd: cloneDir,
+      }
+    );
 
     if (!status.trim()) {
-      console.log("Triangle debut schedule already matches GitHub main.");
+      console.log("Puzzle presets and triangle debut schedule already match GitHub main.");
       return;
     }
 
-    await runGit(["add", "src/triangleDebuts.json"], { cwd: cloneDir });
-    await runGit(["commit", "-m", "Update triangle debut schedule"], { cwd: cloneDir });
+    await runGit(["add", "src/puzzlePresets.json", "src/triangleDebuts.json"], { cwd: cloneDir });
+    await runGit(["commit", "-m", "Update puzzle presets and debut schedule"], { cwd: cloneDir });
     await runGit(["push", "origin", "main"], { cwd: cloneDir });
-    console.log("Published triangle debut schedule to GitHub main.");
+    console.log("Published puzzle presets and triangle debut schedule to GitHub main.");
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }

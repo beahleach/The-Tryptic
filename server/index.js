@@ -10,8 +10,9 @@ const __dirname = path.dirname(__filename);
 const execFileAsync = promisify(execFile);
 const DATA_DIR = path.join(__dirname, "data");
 const PREFS_PATH = path.join(DATA_DIR, "preferences.json");
+const PUZZLE_PRESETS_PATH = path.join(__dirname, "..", "src", "puzzlePresets.json");
 const TRIANGLE_DEBUTS_PATH = path.join(__dirname, "..", "src", "triangleDebuts.json");
-const PUBLISH_TRIANGLE_DEBUTS_SCRIPT = path.join(__dirname, "..", "scripts", "publish-triangle-debuts.mjs");
+const PUBLISH_GAME_CONFIG_SCRIPT = path.join(__dirname, "..", "scripts", "publish-triangle-debuts.mjs");
 const PORT = Number(process.env.PORT || 8787);
 
 const defaultPreferences = {
@@ -38,6 +39,14 @@ async function ensureTriangleDebutsFile() {
   }
 }
 
+async function ensurePuzzlePresetsFile() {
+  try {
+    await readFile(PUZZLE_PRESETS_PATH, "utf8");
+  } catch {
+    await writeFile(PUZZLE_PRESETS_PATH, "{}\n");
+  }
+}
+
 async function readPreferences() {
   await ensurePreferencesFile();
   try {
@@ -52,6 +61,23 @@ async function readPreferences() {
 async function writePreferences(preferences) {
   await ensurePreferencesFile();
   await writeFile(PREFS_PATH, JSON.stringify(preferences, null, 2));
+}
+
+async function readPuzzlePresets() {
+  await ensurePuzzlePresetsFile();
+  try {
+    const raw = await readFile(PUZZLE_PRESETS_PATH, "utf8");
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writePuzzlePresets(entries) {
+  await ensurePuzzlePresetsFile();
+  const nextEntries = entries && typeof entries === "object" && !Array.isArray(entries) ? entries : {};
+  await writeFile(PUZZLE_PRESETS_PATH, `${JSON.stringify(nextEntries, null, 2)}\n`);
 }
 
 async function readTriangleDebuts() {
@@ -70,8 +96,8 @@ async function writeTriangleDebuts(entries) {
   await writeFile(TRIANGLE_DEBUTS_PATH, `${JSON.stringify(Array.isArray(entries) ? entries : [], null, 2)}\n`);
 }
 
-async function publishTriangleDebutsToGitHub() {
-  const { stdout } = await execFileAsync(process.execPath, [PUBLISH_TRIANGLE_DEBUTS_SCRIPT], {
+async function publishGameConfigToGitHub() {
+  const { stdout } = await execFileAsync(process.execPath, [PUBLISH_GAME_CONFIG_SCRIPT], {
     cwd: path.join(__dirname, ".."),
     encoding: "utf8",
     maxBuffer: 1024 * 1024 * 10,
@@ -146,7 +172,7 @@ const server = http.createServer(async (request, response) => {
         let publish = { ok: true, message: "Triangle debut schedule published to GitHub main." };
 
         try {
-          const message = await publishTriangleDebutsToGitHub();
+          const message = await publishGameConfigToGitHub();
           publish = {
             ok: true,
             message: message || publish.message,
@@ -155,6 +181,51 @@ const server = http.createServer(async (request, response) => {
           publish = {
             ok: false,
             message: error instanceof Error ? error.message : "Triangle debut schedule save succeeded, but publish failed.",
+          };
+        }
+
+        sendJson(response, 200, {
+          entries: incoming,
+          publish,
+        });
+      } catch (error) {
+        sendJson(response, 400, { error: error instanceof Error ? error.message : "Bad request" });
+      }
+      return;
+    }
+
+    sendJson(response, 405, { error: "Method not allowed" });
+    return;
+  }
+
+  if (url.pathname === "/api/puzzle-presets") {
+    if (request.method === "GET") {
+      const presets = await readPuzzlePresets();
+      sendJson(response, 200, presets);
+      return;
+    }
+
+    if (request.method === "PUT") {
+      try {
+        const incoming = await readJsonBody(request);
+        if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) {
+          sendJson(response, 400, { error: "Puzzle presets payload must be an object" });
+          return;
+        }
+
+        await writePuzzlePresets(incoming);
+        let publish = { ok: true, message: "Puzzle preset config published to GitHub main." };
+
+        try {
+          const message = await publishGameConfigToGitHub();
+          publish = {
+            ok: true,
+            message: message || publish.message,
+          };
+        } catch (error) {
+          publish = {
+            ok: false,
+            message: error instanceof Error ? error.message : "Puzzle preset save succeeded, but publish failed.",
           };
         }
 
