@@ -4,6 +4,7 @@ import {
   HelpCircle,
   ArrowRight,
   Pencil,
+  Send,
   Play,
   Pause,
   Gamepad2,
@@ -193,6 +194,7 @@ const SKIP_HINT_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-hint-confirm";
 const SKIP_REVEAL_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-reveal-confirm";
 const GAME_SESSION_STORAGE_KEY = "triangle-word-game-session";
 const PUZZLE_PRESETS_STORAGE_KEY = "triangle-word-game-puzzle-presets";
+const TRIANGLE_DEBUTS_STORAGE_KEY = "triangle-word-game-triangle-debuts";
 const ENABLE_PREFERENCE_MEMORY = true;
 const HINT_TOOLTIP_HOVER_DELAY_MS = 250;
 const HINT_TOOLTIP_MOVE_TOLERANCE_PX = 10;
@@ -201,6 +203,8 @@ const HINT_TOOLTIP_HORIZONTAL_CHROME_PX = 36;
 const HINT_TOOLTIP_WIDTH_BUFFER_PX = 6;
 const PUZZLE_SCHEMA_VERSION = 1;
 const GAME_SESSION_SCHEMA_VERSION = 1;
+const DEFAULT_TRIANGLE_DEBUT_HOUR = 6;
+const MAX_TRIANGLE_DEBUT_DURATION_MS = 24 * 60 * 60 * 1000;
 const PUZZLE_PRESET_SLOTS = [
   { id: "triangle-1", label: "Triangle 1 (Default)" },
   { id: "triangle-2", label: "Triangle 2" },
@@ -778,17 +782,154 @@ function writeStoredPuzzlePresets(presets) {
   }
 }
 
-function getInitialPuzzlePreset() {
-  return readPuzzlePresets()[PUZZLE_PRESET_SLOTS[0].id] || null;
+function formatDateInputValue(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatTimeInputValue(date) {
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function buildDefaultTriangleDebutInputs(now = new Date()) {
+  const next = new Date(now);
+  if (
+    next.getHours() > DEFAULT_TRIANGLE_DEBUT_HOUR ||
+    (next.getHours() === DEFAULT_TRIANGLE_DEBUT_HOUR && next.getMinutes() > 0)
+  ) {
+    next.setDate(next.getDate() + 1);
+  }
+  next.setHours(DEFAULT_TRIANGLE_DEBUT_HOUR, 0, 0, 0);
+  return {
+    date: formatDateInputValue(next),
+    time: formatTimeInputValue(next),
+  };
+}
+
+function buildLocalDateFromInputs(dateValue, timeValue = "06:00") {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || ""));
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(String(timeValue || ""));
+  if (!dateMatch || !timeMatch) return null;
+
+  const [, year, month, day] = dateMatch;
+  const [, hours, minutes] = timeMatch;
+  const result = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hours),
+    Number(minutes),
+    0,
+    0
+  );
+
+  if (
+    Number.isNaN(result.getTime()) ||
+    result.getFullYear() !== Number(year) ||
+    result.getMonth() !== Number(month) - 1 ||
+    result.getDate() !== Number(day)
+  ) {
+    return null;
+  }
+
+  return result;
+}
+
+function formatDebutDateTimeLabel(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function doDebutRangesOverlap(aStart, aEnd, bStart, bEnd) {
+  return aStart < bEnd && bStart < aEnd;
+}
+
+function sanitizeTriangleDebutEntry(entry) {
+  const sanitizedPreset = sanitizePuzzlePresetEntry(entry);
+  if (!sanitizedPreset) return null;
+
+  const startsAt = typeof entry?.startsAt === "string" ? new Date(entry.startsAt) : null;
+  const endsAt = typeof entry?.endsAt === "string" ? new Date(entry.endsAt) : null;
+  if (!startsAt || !endsAt || Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime())) return null;
+
+  const durationMs = endsAt.getTime() - startsAt.getTime();
+  if (durationMs <= 0 || durationMs > MAX_TRIANGLE_DEBUT_DURATION_MS) return null;
+
+  return {
+    ...sanitizedPreset,
+    id:
+      typeof entry?.id === "string" && entry.id.trim()
+        ? entry.id
+        : `debut-${startsAt.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    startsAt: startsAt.toISOString(),
+    endsAt: endsAt.toISOString(),
+  };
+}
+
+function sortTriangleDebuts(entries) {
+  return [...entries].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+}
+
+function readStoredTriangleDebuts() {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(TRIANGLE_DEBUTS_STORAGE_KEY) || "[]");
+    if (!Array.isArray(parsed)) return [];
+
+    const now = Date.now();
+    return sortTriangleDebuts(
+      parsed
+        .map((entry) => sanitizeTriangleDebutEntry(entry))
+        .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredTriangleDebuts(entries) {
+  if (typeof window === "undefined") return;
+
+  try {
+    const now = Date.now();
+    const sanitized = sortTriangleDebuts(
+      entries
+        .map((entry) => sanitizeTriangleDebutEntry(entry))
+        .filter((entry) => Boolean(entry) && new Date(entry.endsAt).getTime() > now)
+    );
+    window.localStorage.setItem(TRIANGLE_DEBUTS_STORAGE_KEY, JSON.stringify(sanitized));
+  } catch {
+    // Keep the current in-memory debuts even if browser storage is unavailable.
+  }
+}
+
+function getActiveTriangleDebut(entries, now = Date.now()) {
+  return [...entries]
+    .reverse()
+    .find((entry) => {
+      const start = new Date(entry.startsAt).getTime();
+      const end = new Date(entry.endsAt).getTime();
+      return start <= now && now < end;
+    }) || null;
+}
+
+function getInitialPuzzleSource() {
+  return getActiveTriangleDebut(readStoredTriangleDebuts()) || readPuzzlePresets()[PUZZLE_PRESET_SLOTS[0].id] || null;
 }
 
 function getInitialPuzzleState() {
-  const defaultPreset = getInitialPuzzlePreset();
+  const defaultPreset = getInitialPuzzleSource();
   return defaultPreset ? normalizePuzzleState(defaultPreset.puzzle) : DEFAULT_PUZZLE_STATE;
 }
 
 function getInitialPuzzleName() {
-  const defaultPreset = getInitialPuzzlePreset();
+  const defaultPreset = getInitialPuzzleSource();
   return defaultPreset?.name || DEFAULT_PUZZLE_NAME;
 }
 
@@ -1856,8 +1997,10 @@ export default function TriangleWordGamePrototypeFixed() {
   const [editingClueIndex, setEditingClueIndex] = useState(null);
   const [mode, setMode] = useState("player");
   const [puzzlePresets, setPuzzlePresets] = useState(() => readPuzzlePresets());
+  const [scheduledTriangleDebuts, setScheduledTriangleDebuts] = useState(() => readStoredTriangleDebuts());
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [showSettingsPresetMenu, setShowSettingsPresetMenu] = useState(false);
+  const [showDebutMenu, setShowDebutMenu] = useState(false);
   const [showRevealMenu, setShowRevealMenu] = useState(false);
   const [showRevealConfirmModal, setShowRevealConfirmModal] = useState(false);
   const [skipRevealConfirm, setSkipRevealConfirm] = useState(() => {
@@ -1933,6 +2076,10 @@ export default function TriangleWordGamePrototypeFixed() {
   const [puzzleActionStatus, setPuzzleActionStatus] = useState("");
   const [isLoadingPuzzle, setIsLoadingPuzzle] = useState(false);
   const [isSettingPreset, setIsSettingPreset] = useState(false);
+  const [selectedDebutId, setSelectedDebutId] = useState(null);
+  const [debutDateInput, setDebutDateInput] = useState(() => buildDefaultTriangleDebutInputs().date);
+  const [debutTimeInput, setDebutTimeInput] = useState(() => buildDefaultTriangleDebutInputs().time);
+  const [selectedDebutFileName, setSelectedDebutFileName] = useState("");
   const availablePresetSlots = PUZZLE_PRESET_SLOTS.filter((slot) => puzzlePresets[slot.id]);
   const isEditorContentLocked = false;
   const [sessionHydrated, setSessionHydrated] = useState(false);
@@ -1962,6 +2109,14 @@ export default function TriangleWordGamePrototypeFixed() {
   const solvedTimeline = useMemo(
     () => getAssistTimelineSymbols(finishAssistLog, solvedModalStars),
     [finishAssistLog, solvedModalStars]
+  );
+  const activeTriangleDebut = useMemo(
+    () => getActiveTriangleDebut(scheduledTriangleDebuts),
+    [scheduledTriangleDebuts]
+  );
+  const selectedTriangleDebut = useMemo(
+    () => scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId) || null,
+    [scheduledTriangleDebuts, selectedDebutId]
   );
   const shouldShowPlayerClues = mode === "player";
   const revealedHintTypesBySection = useMemo(() => {
@@ -2399,6 +2554,7 @@ export default function TriangleWordGamePrototypeFixed() {
       setShowRevealMenu(false);
       setShowSettingsMenu(false);
       setShowSettingsPresetMenu(false);
+      setShowDebutMenu(false);
       setOpenHintSection(null);
       setActiveButton(null);
       setHoveredHintTooltip(null);
@@ -2645,6 +2801,7 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
     setShowSettingsPresetMenu(false);
+    setShowDebutMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
     setHoveredHintTooltip(null);
@@ -2662,12 +2819,14 @@ export default function TriangleWordGamePrototypeFixed() {
         !e.target.closest(".reveal-container") &&
         !e.target.closest(".hint-container") &&
         !e.target.closest(".settings-container") &&
-        !e.target.closest(".preset-container")
+        !e.target.closest(".preset-container") &&
+        !e.target.closest(".debut-container")
       ) {
         setShowRevealMenu(false);
         setShowHintMenu(false);
         setShowSettingsMenu(false);
         setShowSettingsPresetMenu(false);
+        setShowDebutMenu(false);
         setShowPresetMenu(false);
         setOpenHintSection(null);
         setActiveButton(null);
@@ -3191,6 +3350,7 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowHowToPlay(false);
     setTypingFlow(false);
     setShowSettingsPresetMenu(false);
+    setShowDebutMenu(false);
   };
 
   const enterEditorMode = () => {
@@ -3206,12 +3366,13 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
     setShowSettingsPresetMenu(false);
+    setShowDebutMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
   };
 
   const applyLoadedPuzzle = (puzzle, nextPuzzleName = "Untitled Puzzle", options = {}) => {
-    const { nextMode = "editor" } = options;
+    const { nextMode = "editor", preserveDebutMenu = false } = options;
     const normalized = normalizePuzzleState(puzzle);
     setSquares(normalized.squares);
     setClues(normalized.clues);
@@ -3231,6 +3392,9 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowRevealMenu(false);
     setShowSettingsMenu(false);
     setShowSettingsPresetMenu(false);
+    if (!preserveDebutMenu) {
+      setShowDebutMenu(false);
+    }
     setOpenHintSection(null);
     setActiveButton(null);
     setTypingFlow(false);
@@ -3272,7 +3436,7 @@ export default function TriangleWordGamePrototypeFixed() {
     writeStoredPuzzlePresets(nextPresets);
     setPuzzleActionStatus(
       slot.id === PUZZLE_PRESET_SLOTS[0].id
-        ? `${slot.label} set to ${loaded.fileName}. This is now the game default.`
+        ? `${slot.label} set to ${loaded.fileName}. This is the game default whenever no triangle debut is active.`
         : `${slot.label} set to ${loaded.fileName}.`
     );
   };
@@ -3313,6 +3477,122 @@ export default function TriangleWordGamePrototypeFixed() {
     setCurrentPuzzleName(preset.name || slot.label);
     setMode("player");
     setPuzzleActionStatus(`Loaded ${slot.label}.`);
+  };
+
+  const resetDebutForm = () => {
+    const defaults = buildDefaultTriangleDebutInputs();
+    setSelectedDebutId(null);
+    setDebutDateInput(defaults.date);
+    setDebutTimeInput(defaults.time);
+    setSelectedDebutFileName("");
+  };
+
+  const handleDebutItemSelect = (entry) => {
+    setSelectedDebutId(entry.id);
+    setDebutDateInput(formatDateInputValue(new Date(entry.startsAt)));
+    setDebutTimeInput(formatTimeInputValue(new Date(entry.startsAt)));
+    setSelectedDebutFileName(entry.fileName || puzzleFileNameFromName(entry.name || "Untitled Puzzle"));
+    applyLoadedPuzzle(entry.puzzle, entry.name || "Untitled Puzzle", {
+      nextMode: "editor",
+      preserveDebutMenu: true,
+    });
+    setShowDebutMenu(true);
+    setShowPresetMenu(false);
+    setPuzzleActionStatus(`Loaded scheduled debut ${entry.name || "Untitled Puzzle"} into the editor.`);
+  };
+
+  const handleSelectDebutFile = async () => {
+    if (!supportsNativeFilePickers()) {
+      setPuzzleActionStatus("Debut scheduling needs a browser with .try file picker support.");
+      return;
+    }
+
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        multiple: false,
+        types: [
+          {
+            description: "Tryptic Puzzle Files",
+            accept: {
+              "application/x-tryptic-puzzle+json": [".try"],
+            },
+          },
+        ],
+      });
+
+      if (!handle) return;
+      const file = await handle.getFile();
+      const loaded = await readPuzzleFromFile(file);
+      const normalizedPuzzle = normalizePuzzleState(loaded.puzzle);
+      setSelectedDebutId(null);
+      setSelectedDebutFileName(loaded.fileName);
+      setDebutDateInput((prev) => prev || buildDefaultTriangleDebutInputs().date);
+      setDebutTimeInput((prev) => prev || buildDefaultTriangleDebutInputs().time);
+      applyLoadedPuzzle(normalizedPuzzle, loaded.name, {
+        nextMode: "editor",
+        preserveDebutMenu: true,
+      });
+      setPuzzleActionStatus(`Loaded ${loaded.fileName} for debut scheduling.`);
+    } catch (error) {
+      if (!isAbortError(error)) {
+        setPuzzleActionStatus("Could not load that debut file. Choose a .try file.");
+      }
+    }
+  };
+
+  const handleSaveTriangleDebut = () => {
+    const startAt = buildLocalDateFromInputs(debutDateInput, debutTimeInput);
+    if (!startAt) {
+      setPuzzleActionStatus("Choose a valid debut date and time.");
+      return;
+    }
+
+    if (!selectedDebutId && !selectedDebutFileName) {
+      setPuzzleActionStatus("Choose a .try file before scheduling a debut.");
+      return;
+    }
+
+    const endAt = new Date(startAt.getTime() + MAX_TRIANGLE_DEBUT_DURATION_MS);
+    const nextEntry = sanitizeTriangleDebutEntry({
+      id: selectedDebutId,
+      name: (currentPuzzleName || "Untitled Puzzle").trim() || "Untitled Puzzle",
+      fileName:
+        selectedDebutFileName || puzzleFileNameFromName((currentPuzzleName || "Untitled Puzzle").trim() || "Untitled Puzzle"),
+      puzzle: serializePuzzleState(squares, clues),
+      updatedAt: new Date().toISOString(),
+      startsAt: startAt.toISOString(),
+      endsAt: endAt.toISOString(),
+    });
+
+    if (!nextEntry) {
+      setPuzzleActionStatus("Could not save that debut. Check the scheduled day and time.");
+      return;
+    }
+
+    const nextDebuts = sortTriangleDebuts([
+      ...scheduledTriangleDebuts.filter((entry) => entry.id !== nextEntry.id),
+      nextEntry,
+    ]);
+
+    setScheduledTriangleDebuts(nextDebuts);
+    writeStoredTriangleDebuts(nextDebuts);
+    setSelectedDebutId(nextEntry.id);
+    setPuzzleActionStatus(
+      selectedDebutId
+        ? `Updated ${nextEntry.name}. It will debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
+        : `Scheduled ${nextEntry.name} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
+    );
+  };
+
+  const handleDeleteTriangleDebut = () => {
+    if (!selectedDebutId) return;
+
+    const removedEntry = scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId);
+    const nextDebuts = scheduledTriangleDebuts.filter((entry) => entry.id !== selectedDebutId);
+    setScheduledTriangleDebuts(nextDebuts);
+    writeStoredTriangleDebuts(nextDebuts);
+    resetDebutForm();
+    setPuzzleActionStatus(`Deleted scheduled debut ${removedEntry?.name || ""}`.trim());
   };
 
   const handlePresetSet = async (slot) => {
@@ -4506,7 +4786,10 @@ export default function TriangleWordGamePrototypeFixed() {
                       <div className="relative preset-container">
                         <button
                           type="button"
-                          onClick={() => setShowPresetMenu((prev) => !prev)}
+                          onClick={() => {
+                            setShowDebutMenu(false);
+                            setShowPresetMenu((prev) => !prev);
+                          }}
                           disabled={isSettingPreset}
                           className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium disabled:opacity-60"
                         >
@@ -4536,6 +4819,158 @@ export default function TriangleWordGamePrototypeFixed() {
                                 </button>
                               );
                             })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative debut-container">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPresetMenu(false);
+                            setShowDebutMenu((prev) => !prev);
+                          }}
+                          className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium"
+                        >
+                          <Send size={15} strokeWidth={1.8} />
+                          Debut
+                        </button>
+
+                        {showDebutMenu && (
+                          <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[380px] overflow-hidden rounded-[18px] border border-[#d8d8d8] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)]">
+                            <div className="border-b border-[#e5e5e5] px-4 py-3">
+                              <div className="text-[15px] font-semibold text-[#111111]">Triangle Debut</div>
+                              <div className="mt-1 text-[12px] leading-5 text-black/55">
+                                Debuts run for 24 hours max. The public default uses the active debut first, then Triangle 1.
+                              </div>
+                              {activeTriangleDebut ? (
+                                <div className="mt-2 rounded-[12px] bg-[#f3f7f4] px-3 py-2 text-[12px] text-[#234536]">
+                                  Now live: <span className="font-semibold">{activeTriangleDebut.name}</span> until{" "}
+                                  {formatDebutDateTimeLabel(activeTriangleDebut.endsAt)}.
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="border-b border-[#e5e5e5] px-4 py-4">
+                              <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-black/45">
+                                1. Schedule
+                              </div>
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={handleSelectDebutFile}
+                                  className="flex w-full items-center justify-between rounded-[12px] border border-[#d8d8d8] px-3 py-2 text-left text-[14px] font-medium text-[#111111]"
+                                >
+                                  <span className="truncate">
+                                    {selectedDebutFileName || "Choose .try file"}
+                                  </span>
+                                  <FolderOpen size={15} strokeWidth={1.8} />
+                                </button>
+                                <div className="mt-1 text-[12px] leading-5 text-black/55">
+                                  Only `.try` files are accepted.
+                                </div>
+                              </div>
+                              <div className="mt-3 grid grid-cols-2 gap-3">
+                                <label className="flex flex-col gap-1 text-[13px] font-medium text-[#111111]">
+                                  Debut day
+                                  <input
+                                    type="date"
+                                    value={debutDateInput}
+                                    onChange={(event) => setDebutDateInput(event.target.value)}
+                                    className="rounded-[12px] border border-[#d8d8d8] px-3 py-2 text-[14px] font-normal outline-none"
+                                  />
+                                </label>
+                                <label className="flex flex-col gap-1 text-[13px] font-medium text-[#111111]">
+                                  Debut time
+                                  <input
+                                    type="time"
+                                    value={debutTimeInput}
+                                    onChange={(event) => setDebutTimeInput(event.target.value)}
+                                    className="rounded-[12px] border border-[#d8d8d8] px-3 py-2 text-[14px] font-normal outline-none"
+                                  />
+                                </label>
+                              </div>
+                              <div className="mt-3 text-[12px] leading-5 text-black/55">
+                                Default debut time is 6:00 AM. This puzzle stays default until{" "}
+                                {(() => {
+                                  const previewStart = buildLocalDateFromInputs(debutDateInput, debutTimeInput);
+                                  if (!previewStart) return "the next day at the same time";
+                                  return formatDebutDateTimeLabel(
+                                    new Date(previewStart.getTime() + MAX_TRIANGLE_DEBUT_DURATION_MS).toISOString()
+                                  );
+                                })()}
+                                .
+                              </div>
+                              <div className="mt-4 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={handleSaveTriangleDebut}
+                                  className="rounded-full bg-[#111111] px-4 py-2 text-[13px] font-medium text-white"
+                                >
+                                  {selectedTriangleDebut ? "Save debut changes" : "Schedule debut"}
+                                </button>
+                                {selectedTriangleDebut ? (
+                                  <button
+                                    type="button"
+                                    onClick={handleDeleteTriangleDebut}
+                                    className="rounded-full border border-[#d8d8d8] px-4 py-2 text-[13px] font-medium text-[#111111]"
+                                  >
+                                    Delete debut
+                                  </button>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  onClick={resetDebutForm}
+                                  className="rounded-full border border-[#d8d8d8] px-4 py-2 text-[13px] font-medium text-[#111111]"
+                                >
+                                  New
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="px-4 py-4">
+                              <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-black/45">
+                                2. Scheduled triangles
+                              </div>
+                              <div className="mt-3 max-h-[260px] overflow-auto">
+                                {scheduledTriangleDebuts.length ? (
+                                  <div className="space-y-2">
+                                    {scheduledTriangleDebuts.map((entry) => {
+                                      const isActive =
+                                        new Date(entry.startsAt).getTime() <= Date.now() &&
+                                        Date.now() < new Date(entry.endsAt).getTime();
+                                      const isSelected = entry.id === selectedDebutId;
+                                      return (
+                                        <button
+                                          key={entry.id}
+                                          type="button"
+                                          onClick={() => handleDebutItemSelect(entry)}
+                                          className="block w-full rounded-[14px] border px-3 py-3 text-left transition-colors"
+                                          style={{
+                                            borderColor: isSelected ? "#111111" : "#d8d8d8",
+                                            background: isSelected ? "#f7f7f7" : "#ffffff",
+                                          }}
+                                        >
+                                          <div className="flex items-center justify-between gap-3 text-[13px] font-semibold text-[#111111]">
+                                            <span className="truncate">{entry.name}</span>
+                                            <span className="shrink-0 text-[11px] uppercase tracking-[0.08em] text-black/45">
+                                              {isActive ? "Live" : "Scheduled"}
+                                            </span>
+                                          </div>
+                                          <div className="mt-1 text-[12px] leading-5 text-black/55">
+                                            {formatDebutDateTimeLabel(entry.startsAt)} to {formatDebutDateTimeLabel(entry.endsAt)}
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="rounded-[14px] border border-dashed border-[#d8d8d8] px-3 py-4 text-[12px] text-black/55">
+                                    No triangle debuts scheduled yet.
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         )}
                       </div>
