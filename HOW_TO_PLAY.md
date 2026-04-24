@@ -18,7 +18,9 @@ Each clue has three parts.
 
 1. `WORDPLAY` which tells you how to play with the
 2. `FODDER` to transform it into a synonym for the
-3. `DEFINITION`
+3. `DEFINITION*`
+
+*Definitions will always be at the beginning or the end of a clue.*
 
 ### Types of wordplay
 

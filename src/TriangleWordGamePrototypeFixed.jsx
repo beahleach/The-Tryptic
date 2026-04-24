@@ -172,7 +172,7 @@ const TRIUMPH_SUBSECTIONS = ["Clues", "Types of wordplay", "Scoring"];
 const TRIUMPH_SUBSECTION_BODY = {
   Clues: [
     "Each clue has three parts.",
-    "WORDPLAY which tells you how to play with the\nFODDER to transform it into a synonym for the\nDEFINITION",
+    "WORDPLAY which tells you how to play with the\nFODDER to transform it into a synonym for the\nDEFINITION*",
   ],
   "Types of wordplay": [
     "Anagram: rearrange fodder letters",
@@ -191,6 +191,7 @@ const TRIUMPH_SUBSECTION_BODY = {
     "🔍 💡 Magnifying glasses/ lightbulbs mark reveals/hints used while solving.",
   ],
 };
+const CLUE_DEFINITION_NOTE = "*Definitions will always be at the beginning or the end of a clue.";
 
 const PLAYER_UI_FONT = '"Avenir Next", "Avenir", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const HIGHLIGHT_COLORS = Object.fromEntries(
@@ -5765,18 +5766,27 @@ export default function TriangleWordGamePrototypeFixed() {
                                         </>
                                       )
                                       : subsection === "Clues"
-                                        ? TRIUMPH_SUBSECTION_BODY[subsection].map((line) =>
-                                            line.includes("\n") ? (
-                                              <ol key={line} className="mt-3 list-decimal space-y-2 pl-6">
-                                                {line.split("\n").map((item) => (
-                                                  <li key={item}>{renderCluePartsExplanation(item)}</li>
-                                                ))}
-                                              </ol>
-                                            ) : (
-                                              <p key={line} className="mt-3 first:mt-0">
-                                                {renderCluePartsExplanation(line)}
-                                              </p>
-                                            )
+                                        ? (
+                                            <>
+                                              {TRIUMPH_SUBSECTION_BODY[subsection].map((line) =>
+                                                line.includes("\n") ? (
+                                                  <Fragment key={line}>
+                                                    <ol className="mt-3 list-decimal space-y-2 pl-6">
+                                                      {line.split("\n").map((item) => (
+                                                        <li key={item}>{renderCluePartsExplanation(item)}</li>
+                                                      ))}
+                                                    </ol>
+                                                    <p className="mt-3 text-[15px] italic leading-6">
+                                                      {CLUE_DEFINITION_NOTE}
+                                                    </p>
+                                                  </Fragment>
+                                                ) : (
+                                                  <p key={line} className="mt-3 first:mt-0">
+                                                    {renderCluePartsExplanation(line)}
+                                                  </p>
+                                                )
+                                              )}
+                                            </>
                                           )
                                       : subsection === "Scoring"
                                         ? TRIUMPH_SUBSECTION_BODY[subsection].map((line) => (
