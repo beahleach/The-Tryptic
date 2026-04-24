@@ -24,6 +24,17 @@ function formatDebutDateTime(value) {
   });
 }
 
+function formatDebutTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "??:??";
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Chicago",
+  });
+}
+
 async function readEntries(filePath) {
   if (!filePath) return [];
   try {
@@ -35,19 +46,21 @@ async function readEntries(filePath) {
   }
 }
 
-function buildMessages(previousEntries, nextEntries) {
+function buildAlerts(previousEntries, nextEntries) {
   const previousById = new Map(previousEntries.map((entry) => [entry.id, entry]));
   const nextById = new Map(nextEntries.map((entry) => [entry.id, entry]));
-  const messages = [];
+  const alerts = [];
 
   for (const entry of nextEntries) {
     const previous = previousById.get(entry.id);
-    const label = getDebutDisplayName(entry);
+    const fileName = getDebutDisplayName(entry);
+    const time = formatDebutTime(entry.startsAt);
 
     if (!previous) {
-      messages.push(
-        `Tryptic: Scheduled ${label} to debut ${formatDebutDateTime(entry.startsAt)} through ${formatDebutDateTime(entry.endsAt)}.`
-      );
+      alerts.push({
+        subject: `[DEBUT SCHEDULED ${time}] ${fileName}`,
+        body: `Scheduled ${fileName} to debut ${formatDebutDateTime(entry.startsAt)} through ${formatDebutDateTime(entry.endsAt)}.`,
+      });
       continue;
     }
 
@@ -57,35 +70,39 @@ function buildMessages(previousEntries, nextEntries) {
       previous.fileName !== entry.fileName ||
       previous.name !== entry.name
     ) {
-      messages.push(
-        `Tryptic: Updated debut ${label}. It now runs ${formatDebutDateTime(entry.startsAt)} through ${formatDebutDateTime(entry.endsAt)}.`
-      );
+      alerts.push({
+        subject: `[DEBUT UPDATED ${time}] ${fileName}`,
+        body: `Updated ${fileName}. It now runs ${formatDebutDateTime(entry.startsAt)} through ${formatDebutDateTime(entry.endsAt)}.`,
+      });
     }
   }
 
   for (const entry of previousEntries) {
     if (nextById.has(entry.id)) continue;
-    messages.push(`Tryptic: Deleted debut ${getDebutDisplayName(entry)}.`);
+    alerts.push({
+      subject: `[DEBUT DELETED ${formatDebutTime(entry.startsAt)}] ${getDebutDisplayName(entry)}`,
+      body: `Deleted ${getDebutDisplayName(entry)} from the debut schedule.`,
+    });
   }
 
-  return messages;
+  return alerts;
 }
 
 async function main() {
   const previousEntries = await readEntries(getArgValue("previous"));
   const nextEntries = await readEntries(getArgValue("current"));
-  const messages = buildMessages(previousEntries, nextEntries);
+  const alerts = buildAlerts(previousEntries, nextEntries);
   const outputPath = getArgValue("output");
 
   if (outputPath) {
-    await writeFile(outputPath, messages.join("\n"), "utf8");
+    await writeFile(outputPath, JSON.stringify({ alerts }, null, 2), "utf8");
   }
 
-  for (const message of messages) {
-    console.log(message);
+  for (const alert of alerts) {
+    console.log(`${alert.subject}\n${alert.body}`);
   }
 
-  if (!messages.length) {
+  if (!alerts.length) {
     console.log("No triangle debut change notifications to send.");
   }
 }

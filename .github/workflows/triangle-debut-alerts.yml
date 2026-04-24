@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "src/triangleDebuts.json"
+      - "src/puzzlePresets.json"
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
@@ -31,20 +32,32 @@ jobs:
         run: |
           git show "${{ github.event.before }}:src/triangleDebuts.json" > /tmp/triangleDebuts.previous.json || echo "[]" > /tmp/triangleDebuts.previous.json
 
+      - name: Prepare previous preset snapshot
+        if: github.event_name == 'push'
+        run: |
+          git show "${{ github.event.before }}:src/puzzlePresets.json" > /tmp/puzzlePresets.previous.json || echo "{}" > /tmp/puzzlePresets.previous.json
+
       - name: Send schedule change alerts
         if: github.event_name == 'push'
-        run: node scripts/notify-triangle-debut-changes.mjs --previous=/tmp/triangleDebuts.previous.json --current=src/triangleDebuts.json --output=/tmp/triangleDebutScheduleAlerts.txt
+        run: node scripts/notify-triangle-debut-changes.mjs --previous=/tmp/triangleDebuts.previous.json --current=src/triangleDebuts.json --output=/tmp/triangleDebutScheduleAlerts.json
 
       - name: Capture schedule alert body
         if: github.event_name == 'push'
         run: |
-          if [ -s /tmp/triangleDebutScheduleAlerts.txt ]; then
-            echo "HAS_SCHEDULE_ALERTS=true" >> "$GITHUB_ENV"
-            BODY="$(cat /tmp/triangleDebutScheduleAlerts.txt)"
+          if [ -s /tmp/triangleDebutScheduleAlerts.json ]; then
+            SUBJECT="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/triangleDebutScheduleAlerts.json","utf8")); process.stdout.write(data.alerts?.[0]?.subject || "")')"
+            BODY="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/triangleDebutScheduleAlerts.json","utf8")); process.stdout.write(data.alerts?.[0]?.body || "")')"
+            SUBJECT="${SUBJECT//'%'/'%25'}"
+            SUBJECT="${SUBJECT//$'\n'/'%0A'}"
+            SUBJECT="${SUBJECT//$'\r'/'%0D'}"
             BODY="${BODY//'%'/'%25'}"
             BODY="${BODY//$'\n'/'%0A'}"
             BODY="${BODY//$'\r'/'%0D'}"
-            echo "SCHEDULE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
+            if [ -n "$SUBJECT" ]; then
+              echo "HAS_SCHEDULE_ALERTS=true" >> "$GITHUB_ENV"
+              echo "SCHEDULE_ALERT_SUBJECT=$SUBJECT" >> "$GITHUB_ENV"
+              echo "SCHEDULE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
+            fi
           fi
 
       - name: Email schedule change alerts
@@ -55,35 +68,79 @@ jobs:
           server_port: ${{ secrets.ALERT_EMAIL_SMTP_PORT }}
           username: ${{ secrets.ALERT_EMAIL_SMTP_USERNAME }}
           password: ${{ secrets.ALERT_EMAIL_SMTP_PASSWORD }}
-          subject: Tryptic debut schedule updated
+          subject: ${{ env.SCHEDULE_ALERT_SUBJECT }}
           to: thetryptic@gmail.com
           from: ${{ secrets.ALERT_EMAIL_FROM }}
           body: ${{ env.SCHEDULE_ALERT_BODY }}
           secure: true
 
-      - name: Build live or fallback alert
-        run: node scripts/monitor-live-triangle-debut.mjs --debuts=src/triangleDebuts.json --state=.github/triangle-debut-monitor.json --output=/tmp/triangleDebutLiveAlert.txt
+      - name: Build preset alerts
+        if: github.event_name == 'push'
+        run: node scripts/notify-preset-changes.mjs --previous=/tmp/puzzlePresets.previous.json --current=src/puzzlePresets.json --output=/tmp/presetAlerts.json
 
-      - name: Capture live alert body
+      - name: Capture preset alert body
+        if: github.event_name == 'push'
         run: |
-          if [ -s /tmp/triangleDebutLiveAlert.txt ]; then
-            echo "HAS_LIVE_ALERT=true" >> "$GITHUB_ENV"
-            BODY="$(cat /tmp/triangleDebutLiveAlert.txt)"
+          if [ -s /tmp/presetAlerts.json ]; then
+            echo "HAS_PRESET_ALERTS=true" >> "$GITHUB_ENV"
+            SUBJECT="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/presetAlerts.json","utf8")); process.stdout.write(data.alerts?.[0]?.subject || "")')"
+            BODY="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/presetAlerts.json","utf8")); process.stdout.write(data.alerts?.[0]?.body || "")')"
+            SUBJECT="${SUBJECT//'%'/'%25'}"
+            SUBJECT="${SUBJECT//$'\n'/'%0A'}"
+            SUBJECT="${SUBJECT//$'\r'/'%0D'}"
             BODY="${BODY//'%'/'%25'}"
             BODY="${BODY//$'\n'/'%0A'}"
             BODY="${BODY//$'\r'/'%0D'}"
-            echo "LIVE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
+            if [ -n "$SUBJECT" ]; then
+              echo "PRESET_ALERT_SUBJECT=$SUBJECT" >> "$GITHUB_ENV"
+              echo "PRESET_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
+            fi
           fi
 
-      - name: Email live or fallback alert
-        if: env.HAS_LIVE_ALERT == 'true'
+      - name: Email preset alerts
+        if: github.event_name == 'push' && env.PRESET_ALERT_SUBJECT != ''
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: ${{ secrets.ALERT_EMAIL_SMTP_SERVER }}
           server_port: ${{ secrets.ALERT_EMAIL_SMTP_PORT }}
           username: ${{ secrets.ALERT_EMAIL_SMTP_USERNAME }}
           password: ${{ secrets.ALERT_EMAIL_SMTP_PASSWORD }}
-          subject: Tryptic live debut status changed
+          subject: ${{ env.PRESET_ALERT_SUBJECT }}
+          to: thetryptic@gmail.com
+          from: ${{ secrets.ALERT_EMAIL_FROM }}
+          body: ${{ env.PRESET_ALERT_BODY }}
+          secure: true
+
+      - name: Build live or fallback alert
+        run: node scripts/monitor-live-triangle-debut.mjs --debuts=src/triangleDebuts.json --state=.github/triangle-debut-monitor.json --output=/tmp/triangleDebutLiveAlert.json
+
+      - name: Capture live alert body
+        run: |
+          if [ -s /tmp/triangleDebutLiveAlert.json ]; then
+            echo "HAS_LIVE_ALERT=true" >> "$GITHUB_ENV"
+            SUBJECT="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/triangleDebutLiveAlert.json","utf8")); process.stdout.write(data.alert?.subject || "")')"
+            BODY="$(node -e 'const fs=require("fs"); const data=JSON.parse(fs.readFileSync("/tmp/triangleDebutLiveAlert.json","utf8")); process.stdout.write(data.alert?.body || "")')"
+            SUBJECT="${SUBJECT//'%'/'%25'}"
+            SUBJECT="${SUBJECT//$'\n'/'%0A'}"
+            SUBJECT="${SUBJECT//$'\r'/'%0D'}"
+            BODY="${BODY//'%'/'%25'}"
+            BODY="${BODY//$'\n'/'%0A'}"
+            BODY="${BODY//$'\r'/'%0D'}"
+            if [ -n "$SUBJECT" ]; then
+              echo "LIVE_ALERT_SUBJECT=$SUBJECT" >> "$GITHUB_ENV"
+              echo "LIVE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
+            fi
+          fi
+
+      - name: Email live or fallback alert
+        if: env.LIVE_ALERT_SUBJECT != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.ALERT_EMAIL_SMTP_SERVER }}
+          server_port: ${{ secrets.ALERT_EMAIL_SMTP_PORT }}
+          username: ${{ secrets.ALERT_EMAIL_SMTP_USERNAME }}
+          password: ${{ secrets.ALERT_EMAIL_SMTP_PASSWORD }}
+          subject: ${{ env.LIVE_ALERT_SUBJECT }}
           to: thetryptic@gmail.com
           from: ${{ secrets.ALERT_EMAIL_FROM }}
           body: ${{ env.LIVE_ALERT_BODY }}

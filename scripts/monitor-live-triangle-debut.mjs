@@ -24,6 +24,17 @@ function formatDebutDateTime(value) {
   });
 }
 
+function formatDebutTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "??:??";
+  return date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Chicago",
+  });
+}
+
 async function readJson(filePath, fallback) {
   try {
     const raw = await readFile(filePath, "utf8");
@@ -60,7 +71,7 @@ async function main() {
 
   if (state.lastActiveDebutKey === nextKey) {
     if (outputPath) {
-      await writeFile(outputPath, "", "utf8");
+      await writeFile(outputPath, JSON.stringify({ alert: null }, null, 2), "utf8");
     }
     console.log("No live debut change detected.");
     return;
@@ -75,25 +86,31 @@ async function main() {
   if (!activeDebut) {
     if (!state.lastActiveDebutKey) {
       if (outputPath) {
-        await writeFile(outputPath, "", "utf8");
+        await writeFile(outputPath, JSON.stringify({ alert: null }, null, 2), "utf8");
       }
       console.log("No live debut is active and no notification was needed.");
       return;
     }
 
-    const message = "Tryptic: No live debut is active. Public players are back on the Triangle 1 preset.";
+    const alert = {
+      subject: `[DEBUT LIVE ??] Triangle 1`,
+      body: "No live debut is active. Public players are back on the Triangle 1 preset.",
+    };
     if (outputPath) {
-      await writeFile(outputPath, message, "utf8");
+      await writeFile(outputPath, JSON.stringify({ alert }, null, 2), "utf8");
     }
-    console.log(message);
+    console.log(`${alert.subject}\n${alert.body}`);
     return;
   }
 
-  const message = `Tryptic: ${getDebutDisplayName(activeDebut)} is now live for public players until ${formatDebutDateTime(activeDebut.endsAt)}.`;
+  const alert = {
+    subject: `[DEBUT LIVE ${formatDebutTime(activeDebut.startsAt)}] ${getDebutDisplayName(activeDebut)}`,
+    body: `${getDebutDisplayName(activeDebut)} is now live for public players until ${formatDebutDateTime(activeDebut.endsAt)}.`,
+  };
   if (outputPath) {
-    await writeFile(outputPath, message, "utf8");
+    await writeFile(outputPath, JSON.stringify({ alert }, null, 2), "utf8");
   }
-  console.log(message);
+  console.log(`${alert.subject}\n${alert.body}`);
 }
 
 main().catch((error) => {
