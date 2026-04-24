@@ -4,11 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:client": "vite",
+    "dev:server": "node server/index.js",
     "build": "vite build",
     "server": "node server/index.js",
     "publish:game-config": "node scripts/publish-triangle-debuts.mjs",
     "publish:triangle-debuts": "node scripts/publish-triangle-debuts.mjs",
+    "publish:app": "node scripts/publish-current-app.mjs",
     "proof:playtester": "node scripts/proof-playtester-package.mjs"
   },
   "dependencies": {

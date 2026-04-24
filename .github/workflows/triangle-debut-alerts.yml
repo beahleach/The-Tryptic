@@ -1,0 +1,102 @@
+name: Triangle Debut Alerts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/triangleDebuts.json"
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prepare previous debut snapshot
+        if: github.event_name == 'push'
+        run: |
+          git show "${{ github.event.before }}:src/triangleDebuts.json" > /tmp/triangleDebuts.previous.json || echo "[]" > /tmp/triangleDebuts.previous.json
+
+      - name: Send schedule change alerts
+        if: github.event_name == 'push'
+        run: node scripts/notify-triangle-debut-changes.mjs --previous=/tmp/triangleDebuts.previous.json --current=src/triangleDebuts.json --output=/tmp/triangleDebutScheduleAlerts.txt
+
+      - name: Capture schedule alert body
+        if: github.event_name == 'push'
+        run: |
+          if [ -s /tmp/triangleDebutScheduleAlerts.txt ]; then
+            echo "HAS_SCHEDULE_ALERTS=true" >> "$GITHUB_ENV"
+            {
+              echo "SCHEDULE_ALERT_BODY<<EOF"
+              cat /tmp/triangleDebutScheduleAlerts.txt
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          fi
+
+      - name: Email schedule change alerts
+        if: github.event_name == 'push' && env.HAS_SCHEDULE_ALERTS == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.ALERT_EMAIL_SMTP_SERVER }}
+          server_port: ${{ secrets.ALERT_EMAIL_SMTP_PORT }}
+          username: ${{ secrets.ALERT_EMAIL_SMTP_USERNAME }}
+          password: ${{ secrets.ALERT_EMAIL_SMTP_PASSWORD }}
+          subject: Tryptic debut schedule updated
+          to: thetryptic@gmail.com
+          from: ${{ secrets.ALERT_EMAIL_FROM }}
+          body: ${{ env.SCHEDULE_ALERT_BODY }}
+          secure: true
+
+      - name: Build live or fallback alert
+        run: node scripts/monitor-live-triangle-debut.mjs --debuts=src/triangleDebuts.json --state=.github/triangle-debut-monitor.json --output=/tmp/triangleDebutLiveAlert.txt
+
+      - name: Capture live alert body
+        run: |
+          if [ -s /tmp/triangleDebutLiveAlert.txt ]; then
+            echo "HAS_LIVE_ALERT=true" >> "$GITHUB_ENV"
+            {
+              echo "LIVE_ALERT_BODY<<EOF"
+              cat /tmp/triangleDebutLiveAlert.txt
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          fi
+
+      - name: Email live or fallback alert
+        if: env.HAS_LIVE_ALERT == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.ALERT_EMAIL_SMTP_SERVER }}
+          server_port: ${{ secrets.ALERT_EMAIL_SMTP_PORT }}
+          username: ${{ secrets.ALERT_EMAIL_SMTP_USERNAME }}
+          password: ${{ secrets.ALERT_EMAIL_SMTP_PASSWORD }}
+          subject: Tryptic live debut status changed
+          to: thetryptic@gmail.com
+          from: ${{ secrets.ALERT_EMAIL_FROM }}
+          body: ${{ env.LIVE_ALERT_BODY }}
+          secure: true
+
+      - name: Commit monitor state
+        run: |
+          if git diff --quiet -- .github/triangle-debut-monitor.json; then
+            echo "No monitor state change to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/triangle-debut-monitor.json
+          git commit -m "Update triangle debut monitor state"
+          git push

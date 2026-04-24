@@ -4,15 +4,19 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { loadLocalEnv } from "../server/loadEnv.js";
 
 const execFileAsync = promisify(execFile);
+
+loadLocalEnv();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.join(__dirname, "..");
 const SOURCE_PRESETS_PATH = path.join(REPO_ROOT, "src", "puzzlePresets.json");
 const SOURCE_DEBUTS_PATH = path.join(REPO_ROOT, "src", "triangleDebuts.json");
-const REMOTE_REPO = "git@github.com:beahleach/The-Tryptic.git";
+const REMOTE_REPO = process.env.TRYPTIC_PUBLISH_REMOTE || "git@github.com:beahleach/The-Tryptic.git";
+const TARGET_BRANCH = process.env.TRYPTIC_PUBLISH_BRANCH || "main";
 
 async function runGit(args, { cwd } = {}) {
   return execFileAsync("git", args, {
@@ -45,8 +49,8 @@ async function main() {
 
     await runGit(["add", "src/puzzlePresets.json", "src/triangleDebuts.json"], { cwd: cloneDir });
     await runGit(["commit", "-m", "Update puzzle presets and debut schedule"], { cwd: cloneDir });
-    await runGit(["push", "origin", "main"], { cwd: cloneDir });
-    console.log("Published puzzle presets and triangle debut schedule to GitHub main.");
+    await runGit(["push", "origin", TARGET_BRANCH], { cwd: cloneDir });
+    console.log(`Published puzzle presets and triangle debut schedule to GitHub ${TARGET_BRANCH}.`);
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }

@@ -35,17 +35,27 @@ npm install
 npm run dev
 ```
 
+`npm run dev` now starts both the Vite frontend and the local backend API, which is required for preset publishing, debut scheduling, and automatic config pushes.
+
 ## Development
 
 ```sh
 npm run dev
+npm run dev:client
+npm run dev:server
 npm run build
 npm run proof:playtester
+npm run publish:triangle-debuts
+npm run publish:app
 ```
 
-- `npm run dev` starts the local Vite server.
+- `npm run dev` starts the full local dev stack: Vite plus the local backend API.
+- `npm run dev:client` starts only the Vite frontend.
+- `npm run dev:server` starts only the local backend API.
 - `npm run build` creates a static production build in `dist/`.
 - `npm run proof:playtester` verifies the app can build and run from a temporary copy without the local `Puzzles/` folder.
+- `npm run publish:triangle-debuts` publishes the current preset/debut JSON config to GitHub `main`.
+- `npm run publish:app` builds the current workspace, commits it if needed, and pushes the full app state to GitHub `main`.
 
 ## Puzzle Data
 
@@ -65,3 +75,15 @@ npm run build
 ```
 
 and publishes the resulting `dist/` folder to GitHub Pages.
+
+For publish targeting, copy [.env.example](/Users/leahbeach/Documents/The%20Tryptic/.env.example) to `.env.local` and fill in any local overrides you want.
+
+Always-on debut email alerts are handled by [.github/workflows/triangle-debut-alerts.yml](/Users/leahbeach/Documents/The%20Tryptic/.github/workflows/triangle-debut-alerts.yml:1). Add these GitHub repository secrets so alerts can run even when your laptop is closed:
+
+- `ALERT_EMAIL_SMTP_SERVER`
+- `ALERT_EMAIL_SMTP_PORT`
+- `ALERT_EMAIL_SMTP_USERNAME`
+- `ALERT_EMAIL_SMTP_PASSWORD`
+- `ALERT_EMAIL_FROM`
+
+That workflow emails `thetryptic@gmail.com` when a debut is scheduled, updated, deleted, goes live, or falls back to Triangle 1.

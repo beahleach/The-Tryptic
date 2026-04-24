@@ -855,6 +855,12 @@ function formatDebutDateTimeLabel(iso) {
   });
 }
 
+function getDebutDisplayName(entry) {
+  if (entry?.fileName && String(entry.fileName).trim()) return String(entry.fileName).trim();
+  if (entry?.name && String(entry.name).trim()) return String(entry.name).trim();
+  return "Untitled Puzzle";
+}
+
 function doDebutRangesOverlap(aStart, aEnd, bStart, bEnd) {
   return aStart < bEnd && bStart < aEnd;
 }
@@ -2101,7 +2107,7 @@ export default function TriangleWordGamePrototypeFixed() {
     [scheduledTriangleDebuts]
   );
   const defaultSourceLabel = activeTriangleDebut
-    ? `Default live source: debut "${activeTriangleDebut.name}"`
+    ? `Default live source: debut "${getDebutDisplayName(activeTriangleDebut)}"`
     : `Default live source: ${PUZZLE_PRESET_SLOTS[0].label}`;
   const selectedTriangleDebut = useMemo(
     () => scheduledTriangleDebuts.find((entry) => entry.id === selectedDebutId) || null,
@@ -3549,7 +3555,7 @@ export default function TriangleWordGamePrototypeFixed() {
     });
     setShowDebutMenu(true);
     setShowPresetMenu(false);
-    setPuzzleActionStatus(`Loaded scheduled debut ${entry.name || "Untitled Puzzle"} into the editor.`);
+    setPuzzleActionStatus(`Loaded scheduled debut ${getDebutDisplayName(entry)} into the editor.`);
   };
 
   const handleSelectDebutFile = async () => {
@@ -3635,8 +3641,8 @@ export default function TriangleWordGamePrototypeFixed() {
     try {
       const result = await saveTriangleDebuts(nextDebuts);
       const prefix = selectedDebutId
-        ? `Updated ${nextEntry.name}. It will debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
-        : `Scheduled ${nextEntry.name} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`;
+        ? `Updated ${getDebutDisplayName(nextEntry)}. It will debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
+        : `Scheduled ${getDebutDisplayName(nextEntry)} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`;
       setPuzzleActionStatus(
         result?.publish?.ok === false ? `${prefix} ${result.publish.message}` : prefix
       );
@@ -3678,9 +3684,9 @@ export default function TriangleWordGamePrototypeFixed() {
       const result = await saveTriangleDebuts(nextDebuts);
       const prefix = removedWasLive
         ? nextActiveDebut
-          ? `Deleted live debut ${removedEntry?.name || ""}. ${nextActiveDebut.name} is now the active default.`
-          : `Deleted live debut ${removedEntry?.name || ""}. ${PUZZLE_PRESET_SLOTS[0].label} is now the active default.`
-        : `Deleted scheduled debut ${removedEntry?.name || ""}`.trim();
+          ? `Deleted live debut ${getDebutDisplayName(removedEntry)}. ${getDebutDisplayName(nextActiveDebut)} is now the active default.`
+          : `Deleted live debut ${getDebutDisplayName(removedEntry)}. ${PUZZLE_PRESET_SLOTS[0].label} is now the active default.`
+        : `Deleted scheduled debut ${getDebutDisplayName(removedEntry)}`.trim();
       setPuzzleActionStatus(result?.publish?.ok === false ? `${prefix}. ${result.publish.message}` : prefix);
     } catch {
       setPuzzleActionStatus(
@@ -4440,7 +4446,7 @@ export default function TriangleWordGamePrototypeFixed() {
                         <button
                           type="button"
                           onClick={() => setIsDarkMode((prev) => !prev)}
-                          className="flex w-full items-center justify-between px-4 py-3 text-left text-[16px]"
+                          className="flex w-full items-center justify-between rounded-t-[18px] px-4 py-3 text-left text-[16px]"
                           style={{ color: theme.text }}
                           aria-pressed={isDarkMode}
                         >
@@ -4488,7 +4494,7 @@ export default function TriangleWordGamePrototypeFixed() {
                             <button
                               type="button"
                               onClick={() => setShowSettingsPresetMenu((prev) => !prev)}
-                              className="flex w-full items-center justify-between px-4 py-3 text-left text-[16px] transition-colors"
+                              className="flex w-full items-center justify-between rounded-b-[18px] px-4 py-3 text-left text-[16px] transition-colors"
                               style={{
                                 color: theme.text,
                                 background: showSettingsPresetMenu ? theme.menuHoverBg : "transparent",
@@ -4939,7 +4945,7 @@ export default function TriangleWordGamePrototypeFixed() {
                               </div>
                               {activeTriangleDebut ? (
                                 <div className="mt-2 rounded-[12px] bg-[#f3f7f4] px-3 py-2 text-[12px] text-[#234536]">
-                                  Now live: <span className="font-semibold">{activeTriangleDebut.name}</span> until{" "}
+                                  Now live: <span className="font-semibold">{getDebutDisplayName(activeTriangleDebut)}</span> until{" "}
                                   {formatDebutDateTimeLabel(activeTriangleDebut.endsAt)}.
                                 </div>
                               ) : null}
@@ -4955,7 +4961,7 @@ export default function TriangleWordGamePrototypeFixed() {
                                   onClick={handleSelectDebutFile}
                                   className="flex w-full items-center justify-between rounded-[12px] border border-[#d8d8d8] px-3 py-2 text-left text-[14px] font-medium text-[#111111]"
                                 >
-                                  <span className="truncate">
+                                  <span className="min-w-0 flex-1 truncate pr-3">
                                     {selectedDebutFileName || "Choose .try file"}
                                   </span>
                                   <FolderOpen size={15} strokeWidth={1.8} />
@@ -5061,7 +5067,7 @@ export default function TriangleWordGamePrototypeFixed() {
                                           }}
                                         >
                                           <div className="flex items-center justify-between gap-3 text-[13px] font-semibold text-[#111111]">
-                                            <span className="truncate">{entry.name}</span>
+                                            <span className="truncate">{getDebutDisplayName(entry)}</span>
                                             <span
                                               className="shrink-0 text-[11px] uppercase tracking-[0.08em]"
                                               style={{ color: badgeColor }}
