@@ -214,7 +214,7 @@ const HINT_TOOLTIP_WIDTH_BUFFER_PX = 6;
 const PUZZLE_SCHEMA_VERSION = 1;
 const GAME_SESSION_SCHEMA_VERSION = 1;
 const DEFAULT_TRIANGLE_DEBUT_HOUR = 6;
-const MAX_TRIANGLE_DEBUT_DURATION_MS = 24 * 60 * 60 * 1000;
+const MAX_TRIANGLE_DEBUT_DURATION_MS = 48 * 60 * 60 * 1000;
 const PUZZLE_PRESET_SLOTS = [
   { id: "triangle-1", label: "Triangle 1" },
   { id: "triangle-2", label: "Triangle 2" },
@@ -5257,7 +5257,7 @@ export default function TriangleWordGamePrototypeFixed() {
                             <div className="border-b border-[#e5e5e5] px-4 py-3">
                               <div className="text-[15px] font-semibold text-[#111111]">Triangle Debut</div>
                               <div className="mt-1 text-[12px] leading-5 text-black/55">
-                                Debuts run for 24 hours max. The public default uses the active debut first, then Triangle 1.
+                                Debuts run for 48 hours max. The public default uses the active debut first, then Triangle 1.
                               </div>
                               {activeTriangleDebut ? (
                                 <div className="mt-2 rounded-[12px] bg-[#f3f7f4] px-3 py-2 text-[12px] text-[#234536]">
@@ -5697,7 +5697,7 @@ export default function TriangleWordGamePrototypeFixed() {
                                 color: usePlayerAppearanceTheme ? "#ffffff" : "rgba(0,0,0,0.78)",
                               }}
                             >
-                              <p>The Tryptic is a triangular cryptic-style daily puzzle game.</p>
+                              <p>The Tryptic is a triangular cryptic-style tri-weekly puzzle game.</p>
                             </div>
                           </div>
                           {TRIUMPH_SUBSECTIONS.map((subsection) => (

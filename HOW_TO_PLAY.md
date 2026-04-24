@@ -8,7 +8,9 @@ Interactive How to Play page:
 
 ## How to Triumph the Tryptic (How to Play/ Solving)
 
-The Tryptic is a triangular cryptic-style daily puzzle game.
+The Tryptic is a triangular cryptic-style tri-weekly puzzle game.
+
+New public puzzles are planned for Mondays, Wednesdays, and Fridays.
 
 ### Clues
 

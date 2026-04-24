@@ -2,7 +2,7 @@
 
 ![Status: Beta](https://img.shields.io/badge/status-beta-7c3aed)
 
-The Tryptic is a triangular cryptic-style word puzzle game. Solve three clues around a triangle, use hints or reveals when needed, and work your way toward a clean solve.
+The Tryptic is a triangular cryptic-style tri-weekly word puzzle game. Solve three clues around a triangle, use hints or reveals when needed, and work your way toward a clean solve.
 
 ## Play
 
@@ -11,6 +11,8 @@ The latest public build is available here:
 https://beahleach.github.io/The-Tryptic/
 
 The GitHub Pages site is the public player build.
+
+As of April 27, 2026, new puzzles debut tri-weekly (MWF).
 
 **Playtester note:** The public app includes five sample puzzles in the Settings menu. Open `Settings`, then choose `Load preset (playtest)` to try the bundled playtest set.
 
