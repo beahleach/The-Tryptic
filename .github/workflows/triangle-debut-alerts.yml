@@ -40,10 +40,11 @@ jobs:
         run: |
           if [ -s /tmp/triangleDebutScheduleAlerts.txt ]; then
             echo "HAS_SCHEDULE_ALERTS=true" >> "$GITHUB_ENV"
+            DELIM="$(uuidgen)"
             {
-              echo "SCHEDULE_ALERT_BODY<<EOF"
+              echo "SCHEDULE_ALERT_BODY<<$DELIM"
               cat /tmp/triangleDebutScheduleAlerts.txt
-              echo "EOF"
+              echo "$DELIM"
             } >> "$GITHUB_ENV"
           fi
 
@@ -68,10 +69,11 @@ jobs:
         run: |
           if [ -s /tmp/triangleDebutLiveAlert.txt ]; then
             echo "HAS_LIVE_ALERT=true" >> "$GITHUB_ENV"
+            DELIM="$(uuidgen)"
             {
-              echo "LIVE_ALERT_BODY<<EOF"
+              echo "LIVE_ALERT_BODY<<$DELIM"
               cat /tmp/triangleDebutLiveAlert.txt
-              echo "EOF"
+              echo "$DELIM"
             } >> "$GITHUB_ENV"
           fi
 
