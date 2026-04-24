@@ -12,6 +12,10 @@ https://beahleach.github.io/The-Tryptic/
 
 The deployed GitHub Pages app is the public player build.
 
+**Playtester note:**
+
+The public app includes five sample puzzles that can be loaded from the in-app Settings menu. Open `Settings`, then choose `Load preset (playtest)` to try the bundled playtest set.
+
 Repo-native How to Play:
 
 [HOW_TO_PLAY.md](HOW_TO_PLAY.md)
