@@ -95,6 +95,37 @@ function serializeCookie(name, value, options = {}) {
   return parts.join("; ");
 }
 
+function isCrossSiteAuthoringRequest(request) {
+  const origin = String(request.headers.origin || "");
+  const host = String(request.headers.host || "");
+  if (!origin || !host) return false;
+
+  try {
+    const originUrl = new URL(origin);
+    const requestUrl = new URL(`http://${host}`);
+    return originUrl.hostname !== requestUrl.hostname;
+  } catch {
+    return false;
+  }
+}
+
+function isSecureRequest(request) {
+  const forwardedProto = String(request.headers["x-forwarded-proto"] || "").split(",")[0].trim();
+  if (forwardedProto) return forwardedProto === "https";
+  const origin = String(request.headers.origin || "");
+  return origin.startsWith("https://");
+}
+
+function getSessionCookieOptions(request, maxAge) {
+  const crossSite = isCrossSiteAuthoringRequest(request);
+  return {
+    httpOnly: true,
+    sameSite: crossSite ? "None" : "Lax",
+    secure: crossSite || isSecureRequest(request) || process.env.NODE_ENV === "production",
+    maxAge,
+  };
+}
+
 function getAuthenticatedAuthoringState(request) {
   if (!isAuthoringAuthRequired()) {
     return { authenticated: true, authRequired: false };
@@ -484,6 +515,11 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
+  if (url.pathname === "/health") {
+    sendJson(response, 200, { ok: true }, request);
+    return;
+  }
+
   if (url.pathname === "/api/auth/session") {
     sendJson(response, 200, getAuthenticatedAuthoringState(request), request);
     return;
@@ -513,12 +549,11 @@ const server = http.createServer(async (request, response) => {
         { authenticated: true, authRequired: true },
         request,
         {
-          "Set-Cookie": serializeCookie(SESSION_COOKIE_NAME, createSessionToken(), {
-            httpOnly: true,
-            sameSite: "Lax",
-            secure: process.env.NODE_ENV === "production",
-            maxAge: SESSION_MAX_AGE_SECONDS,
-          }),
+          "Set-Cookie": serializeCookie(
+            SESSION_COOKIE_NAME,
+            createSessionToken(),
+            getSessionCookieOptions(request, SESSION_MAX_AGE_SECONDS)
+          ),
         }
       );
     } catch (error) {
@@ -539,12 +574,11 @@ const server = http.createServer(async (request, response) => {
       { authenticated: false, authRequired: isAuthoringAuthRequired() },
       request,
       {
-        "Set-Cookie": serializeCookie(SESSION_COOKIE_NAME, "", {
-          httpOnly: true,
-          sameSite: "Lax",
-          secure: process.env.NODE_ENV === "production",
-          maxAge: 0,
-        }),
+        "Set-Cookie": serializeCookie(
+          SESSION_COOKIE_NAME,
+          "",
+          getSessionCookieOptions(request, 0)
+        ),
       }
     );
     return;

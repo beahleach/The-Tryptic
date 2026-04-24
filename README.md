@@ -107,6 +107,21 @@ Recommended Render environment values:
 
 When using a hosted authoring API, set `VITE_API_BASE_URL` to that Render service URL for any frontend build that should talk to it.
 
+Recommended rollout:
+
+1. Create the Render Web Service from `render.yaml`.
+2. In Render, set:
+   - `TRYPTIC_GITHUB_TOKEN`
+   - `TRYPTIC_ADMIN_PASSWORD`
+   - `TRYPTIC_SESSION_SECRET`
+   - `TRYPTIC_ALLOWED_ORIGINS`
+3. After Render gives you a service URL such as `https://tryptic-authoring-api.onrender.com`, add a GitHub repository variable named `VITE_API_BASE_URL` with that full URL.
+4. Push to `main` or run the Pages workflow again so GitHub Pages rebuilds with the hosted API URL baked in.
+
+The Pages deploy workflow now reads `VITE_API_BASE_URL` from a GitHub repository variable, so you do not need to hardcode the Render URL in the repo.
+
+Hosted publishing uses an authenticated cookie session. For GitHub Pages talking to Render, the backend now automatically uses the stricter cross-site cookie settings required for login to stick.
+
 Always-on debut and preset email alerts are handled by `.github/workflows/triangle-debut-alerts.yml`. Add these GitHub repository secrets so alerts can run even when your laptop is closed:
 
 - `ALERT_EMAIL_SMTP_SERVER`
