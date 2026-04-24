@@ -3590,7 +3590,7 @@ export default function TriangleWordGamePrototypeFixed() {
         nextMode: "editor",
         preserveDebutMenu: true,
       });
-      setPuzzleActionStatus(`Loaded ${loaded.fileName} for debut scheduling.`);
+      setPuzzleActionStatus(`Loaded ${loaded.fileName}`);
     } catch (error) {
       if (!isAbortError(error)) {
         setPuzzleActionStatus("Could not load that debut file. Choose a .try file.");
@@ -3641,8 +3641,8 @@ export default function TriangleWordGamePrototypeFixed() {
     try {
       const result = await saveTriangleDebuts(nextDebuts);
       const prefix = selectedDebutId
-        ? `Updated ${getDebutDisplayName(nextEntry)}. It will debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`
-        : `Scheduled ${getDebutDisplayName(nextEntry)} to debut ${formatDebutDateTimeLabel(nextEntry.startsAt)} through ${formatDebutDateTimeLabel(nextEntry.endsAt)}.`;
+        ? `Updated ${getDebutDisplayName(nextEntry)}`
+        : `Scheduled ${getDebutDisplayName(nextEntry)}`;
       setPuzzleActionStatus(
         result?.publish?.ok === false ? `${prefix} ${result.publish.message}` : prefix
       );
@@ -3684,9 +3684,9 @@ export default function TriangleWordGamePrototypeFixed() {
       const result = await saveTriangleDebuts(nextDebuts);
       const prefix = removedWasLive
         ? nextActiveDebut
-          ? `Deleted live debut ${getDebutDisplayName(removedEntry)}. ${getDebutDisplayName(nextActiveDebut)} is now the active default.`
-          : `Deleted live debut ${getDebutDisplayName(removedEntry)}. ${PUZZLE_PRESET_SLOTS[0].label} is now the active default.`
-        : `Deleted scheduled debut ${getDebutDisplayName(removedEntry)}`.trim();
+          ? `Deleted ${getDebutDisplayName(removedEntry)}`
+          : `Deleted ${getDebutDisplayName(removedEntry)}`
+        : `Deleted ${getDebutDisplayName(removedEntry)}`.trim();
       setPuzzleActionStatus(result?.publish?.ok === false ? `${prefix}. ${result.publish.message}` : prefix);
     } catch {
       setPuzzleActionStatus(
@@ -5094,11 +5094,11 @@ export default function TriangleWordGamePrototypeFixed() {
                       </div>
 
                       {puzzleActionStatus && (
-                        <div className="text-[13px] text-black/60">
+                        <div className="max-w-[220px] truncate rounded-full bg-black/[0.04] px-3 py-1 text-[12px] text-black/60 whitespace-nowrap">
                           {puzzleActionStatus}
                         </div>
                       )}
-                      <div className="text-[13px] text-black/50">
+                      <div className="max-w-[220px] truncate text-[12px] text-black/50 whitespace-nowrap">
                         {defaultSourceLabel}
                       </div>
                     </div>

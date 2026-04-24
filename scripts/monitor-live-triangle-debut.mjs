@@ -27,12 +27,12 @@ function formatDebutDateTime(value) {
 function formatDebutTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "??:??";
-  return date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
+  return `${date.toLocaleTimeString("en-US", {
+    hour: "numeric",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
     timeZone: "America/Chicago",
-  });
+  })} CST`;
 }
 
 async function readJson(filePath, fallback) {
@@ -93,7 +93,7 @@ async function main() {
     }
 
     const alert = {
-      subject: `[DEBUT LIVE ??] Triangle 1`,
+      subject: `[DEBUT LIVE ${formatDebutTime(Date.now())}] SKIP_PAWN_STERN.try`,
       body: "No live debut is active. Public players are back on the Triangle 1 preset.",
     };
     if (outputPath) {
