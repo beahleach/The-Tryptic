@@ -202,6 +202,8 @@ const DARK_MODE_DEFAULT_RESET_KEY = "triangle-word-game-dark-mode-default-reset-
 const SKIP_HINT_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-hint-confirm";
 const SKIP_REVEAL_CONFIRM_STORAGE_KEY = "triangle-word-game-skip-reveal-confirm";
 const GAME_SESSION_STORAGE_KEY = "triangle-word-game-session";
+const LIVE_GAME_STATE_STORAGE_KEY = "triangle-word-game-live-state";
+const LIVE_GAME_TAB_SOURCE_KEY = "triangle-word-game-live-tab-source";
 const PUZZLE_PRESETS_STORAGE_KEY = "triangle-word-game-puzzle-presets";
 const ENABLE_PREFERENCE_MEMORY = true;
 const HINT_TOOLTIP_HOVER_DELAY_MS = 250;
@@ -915,6 +917,72 @@ function getInitialPuzzleSource() {
   return getActiveTriangleDebut(readBundledTriangleDebuts()) || readPuzzlePresets()[PUZZLE_PRESET_SLOTS[0].id] || null;
 }
 
+function buildLivePuzzleSourceDescriptor(activeDebut, presets) {
+  if (activeDebut) {
+    return {
+      kind: "live",
+      sourceKey: [
+        "live",
+        "debut",
+        activeDebut.id,
+        activeDebut.updatedAt || "",
+        activeDebut.startsAt,
+        activeDebut.endsAt,
+      ].join(":"),
+      name: activeDebut.name || "Untitled Puzzle",
+      puzzle: normalizePuzzleState(activeDebut.puzzle),
+    };
+  }
+
+  const fallbackPreset = presets?.[PUZZLE_PRESET_SLOTS[0].id] || null;
+  if (fallbackPreset) {
+    return {
+      kind: "live",
+      sourceKey: [
+        "live",
+        "fallback",
+        PUZZLE_PRESET_SLOTS[0].id,
+        fallbackPreset.updatedAt || "",
+        fallbackPreset.fileName || "",
+        fallbackPreset.name || "",
+      ].join(":"),
+      name: fallbackPreset.name || PUZZLE_PRESET_SLOTS[0].label,
+      puzzle: normalizePuzzleState(fallbackPreset.puzzle),
+    };
+  }
+
+  return {
+    kind: "live",
+    sourceKey: "live:fallback:built-in",
+    name: DEFAULT_PUZZLE_NAME,
+    puzzle: DEFAULT_PUZZLE_STATE,
+  };
+}
+
+function buildInitialPuzzleSourceDescriptor() {
+  return buildLivePuzzleSourceDescriptor(getActiveTriangleDebut(readBundledTriangleDebuts()), readPuzzlePresets());
+}
+
+function buildPlaytestPuzzleSourceDescriptor(slot, preset) {
+  return {
+    kind: "playtest",
+    sourceKey: [
+      "playtest",
+      slot.id,
+      preset?.updatedAt || "",
+      preset?.fileName || "",
+      preset?.name || slot.label,
+    ].join(":"),
+  };
+}
+
+function buildEditorPuzzleSourceDescriptor(name = "Untitled Puzzle") {
+  return {
+    kind: "editor",
+    sourceKey: `editor:${name}`,
+  };
+}
+
 function getInitialPuzzleState() {
   const defaultPreset = getInitialPuzzleSource();
   return defaultPreset ? normalizePuzzleState(defaultPreset.puzzle) : DEFAULT_PUZZLE_STATE;
@@ -923,6 +991,16 @@ function getInitialPuzzleState() {
 function getInitialPuzzleName() {
   const defaultPreset = getInitialPuzzleSource();
   return defaultPreset?.name || DEFAULT_PUZZLE_NAME;
+}
+
+function buildInitialBootState() {
+  const initialSource = buildInitialPuzzleSourceDescriptor();
+  const initialPuzzleState = initialSource?.puzzle || DEFAULT_PUZZLE_STATE;
+  return {
+    puzzleSource: initialSource,
+    puzzleState: initialPuzzleState,
+    puzzleName: initialSource?.name || DEFAULT_PUZZLE_NAME,
+  };
 }
 
 function buildBlankPlayerLetters(squares) {
@@ -980,6 +1058,17 @@ function normalizeGameSessionSnapshot(snapshot, { allowEditorMode = false } = {}
       typeof snapshot.currentPuzzleName === "string" && snapshot.currentPuzzleName.trim()
         ? snapshot.currentPuzzleName
         : "Untitled Puzzle",
+    showWelcomeBackModal: Boolean(snapshot.showWelcomeBackModal),
+    puzzleSourceKind:
+      snapshot.puzzleSourceKind === "live" ||
+      snapshot.puzzleSourceKind === "playtest" ||
+      snapshot.puzzleSourceKind === "editor"
+        ? snapshot.puzzleSourceKind
+        : null,
+    puzzleSourceKey:
+      typeof snapshot.puzzleSourceKey === "string" && snapshot.puzzleSourceKey.trim()
+        ? snapshot.puzzleSourceKey
+        : null,
   };
 }
 
@@ -1977,21 +2066,23 @@ function getTriangleGraphicBounds(squares) {
 
 export default function TriangleWordGamePrototypeFixed() {
   const isLocalEditorEnabled = isLocalEditorEnvironment();
+  const [initialBootState] = useState(() => buildInitialBootState());
   const [authoringAuth, setAuthoringAuth] = useState({
     checked: false,
     authenticated: false,
     authRequired: false,
   });
   const [isAuthoringAuthBusy, setIsAuthoringAuthBusy] = useState(false);
-  const [squares, setSquares] = useState(() => getInitialPuzzleState().squares);
+  const [squares, setSquares] = useState(() => initialBootState.puzzleState.squares);
   const triangleGraphicBounds = useMemo(() => getTriangleGraphicBounds(squares), [squares]);
-  const [selectedId, setSelectedId] = useState(() => getPreferredSelectedSquareId(getInitialPuzzleState().squares));
+  const [selectedId, setSelectedId] = useState(() => getPreferredSelectedSquareId(initialBootState.puzzleState.squares));
   const [seconds, setSeconds] = useState(0);
   const [hasStartedGame, setHasStartedGame] = useState(false);
   const [showStartModal, setShowStartModal] = useState(true);
+  const [showWelcomeBackModal, setShowWelcomeBackModal] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [clues, setClues] = useState(() => getInitialPuzzleState().clues);
-  const [playerLetters, setPlayerLetters] = useState(() => buildBlankPlayerLetters(getInitialPuzzleState().squares));
+  const [clues, setClues] = useState(() => initialBootState.puzzleState.clues);
+  const [playerLetters, setPlayerLetters] = useState(() => buildBlankPlayerLetters(initialBootState.puzzleState.squares));
   const [editingClueIndex, setEditingClueIndex] = useState(null);
   const [mode, setMode] = useState("player");
   const [puzzlePresets, setPuzzlePresets] = useState(() => readPuzzlePresets());
@@ -2071,7 +2162,8 @@ export default function TriangleWordGamePrototypeFixed() {
   const [playerBannerScale, setPlayerBannerScale] = useState(PLAYER_BANNER_TARGET_BROWSER_ZOOM);
   const [activeClueIndex, setActiveClueIndex] = useState(0);
   const [activeHintEditor, setActiveHintEditor] = useState(null);
-  const [currentPuzzleName, setCurrentPuzzleName] = useState(() => getInitialPuzzleName());
+  const [currentPuzzleName, setCurrentPuzzleName] = useState(() => initialBootState.puzzleName);
+  const [currentPuzzleSource, setCurrentPuzzleSource] = useState(() => initialBootState.puzzleSource);
   const [puzzleActionStatus, setPuzzleActionStatus] = useState("");
   const [isLoadingPuzzle, setIsLoadingPuzzle] = useState(false);
   const [isSettingPreset, setIsSettingPreset] = useState(false);
@@ -2113,6 +2205,10 @@ export default function TriangleWordGamePrototypeFixed() {
   const activeTriangleDebut = useMemo(
     () => getActiveTriangleDebut(scheduledTriangleDebuts),
     [scheduledTriangleDebuts]
+  );
+  const livePuzzleSource = useMemo(
+    () => buildLivePuzzleSourceDescriptor(activeTriangleDebut, puzzlePresets),
+    [activeTriangleDebut, puzzlePresets]
   );
   const defaultSourceLabel = activeTriangleDebut
     ? `Default live source: debut "${getDebutDisplayName(activeTriangleDebut)}"`
@@ -2315,45 +2411,139 @@ export default function TriangleWordGamePrototypeFixed() {
     [theme.clueActiveBg, theme.clueInactiveBg, usePlayerAppearanceTheme]
   );
 
+  const restoreSnapshotState = (restoredSession, options = {}) => {
+    const {
+      restart = false,
+      forcePause = false,
+      showWelcomeBack = false,
+      nextPuzzleSource = null,
+    } = options;
+
+    setSquares(restoredSession.squares);
+    setClues(restoredSession.clues);
+    setSelectedId(restoredSession.selectedId);
+    setSelectedIds([]);
+    setLastSide(restoredSession.lastSide);
+    setCurrentPuzzleName(restoredSession.currentPuzzleName);
+    setCurrentPuzzleSource(nextPuzzleSource);
+
+    if (restart) {
+      setPlayerLetters(buildBlankPlayerLetters(restoredSession.squares));
+      setSeconds(0);
+      setHasStartedGame(false);
+      setShowStartModal(true);
+      setShowWelcomeBackModal(false);
+      setIsPaused(false);
+      setMode("player");
+      setShowSolvedModal(false);
+      setFinishedState(null);
+      setAssistLog([]);
+      setFinishAssistLog([]);
+      return;
+    }
+
+    setPlayerLetters(restoredSession.playerLetters);
+    setSeconds(restoredSession.seconds);
+    setHasStartedGame(restoredSession.hasStartedGame);
+    setShowStartModal(showWelcomeBack ? false : restoredSession.showStartModal);
+    setShowWelcomeBackModal(showWelcomeBack || restoredSession.showWelcomeBackModal);
+    setIsPaused(
+      showWelcomeBack || restoredSession.showWelcomeBackModal
+        ? true
+        : forcePause && restoredSession.hasStartedGame && !restoredSession.finishedState
+        ? true
+        : restoredSession.isPaused
+    );
+    setMode(restoredSession.mode);
+    setShowSolvedModal(restoredSession.showSolvedModal);
+    setFinishedState(restoredSession.finishedState);
+    setAssistLog(restoredSession.assistLog);
+    setFinishAssistLog(restoredSession.finishAssistLog);
+  };
+
   useEffect(() => {
+    if (sessionHydrated) return;
     if (typeof window === "undefined") {
       setSessionHydrated(true);
       return;
     }
 
     try {
+      const rawLiveSession = window.localStorage.getItem(LIVE_GAME_STATE_STORAGE_KEY);
       const rawSession = window.sessionStorage.getItem(GAME_SESSION_STORAGE_KEY);
-      if (rawSession) {
+      const navigationEntry = window.performance?.getEntriesByType?.("navigation")?.[0];
+      const navigationType = navigationEntry?.type || "navigate";
+      let restored = false;
+
+      if (rawLiveSession) {
+        const parsedLiveSession = JSON.parse(rawLiveSession);
+        const restoredLiveSession = normalizeGameSessionSnapshot(parsedLiveSession, {
+          allowEditorMode: false,
+        });
+
+        if (
+          restoredLiveSession &&
+          restoredLiveSession.puzzleSourceKind === "live" &&
+          restoredLiveSession.puzzleSourceKey === livePuzzleSource.sourceKey
+        ) {
+          const reopened = navigationType !== "reload";
+          restoreSnapshotState(restoredLiveSession, {
+            nextPuzzleSource: livePuzzleSource,
+            forcePause: navigationType === "reload",
+            showWelcomeBack:
+              !restoredLiveSession.showWelcomeBackModal &&
+              reopened &&
+              restoredLiveSession.hasStartedGame &&
+              !restoredLiveSession.finishedState,
+          });
+          restored = true;
+        } else {
+          window.localStorage.removeItem(LIVE_GAME_STATE_STORAGE_KEY);
+        }
+      }
+
+      if (!restored && rawSession) {
         const parsedSession = JSON.parse(rawSession);
         const restoredSession = normalizeGameSessionSnapshot(parsedSession, {
           allowEditorMode: isLocalEditorEnabled,
         });
 
         if (restoredSession) {
-          setSquares(restoredSession.squares);
-          setClues(restoredSession.clues);
-          setPlayerLetters(restoredSession.playerLetters);
-          setSeconds(restoredSession.seconds);
-          setHasStartedGame(restoredSession.hasStartedGame);
-          setShowStartModal(restoredSession.showStartModal);
-          setIsPaused(restoredSession.isPaused);
-          setMode(restoredSession.mode);
-          setShowSolvedModal(restoredSession.showSolvedModal);
-          setFinishedState(restoredSession.finishedState);
-          setAssistLog(restoredSession.assistLog);
-          setFinishAssistLog(restoredSession.finishAssistLog);
-          setSelectedId(restoredSession.selectedId);
-          setSelectedIds([]);
-          setLastSide(restoredSession.lastSide);
-          setCurrentPuzzleName(restoredSession.currentPuzzleName);
+          if (restoredSession.puzzleSourceKind === "playtest") {
+            restoreSnapshotState(restoredSession, {
+              restart: true,
+              nextPuzzleSource: {
+                kind: "playtest",
+                sourceKey: restoredSession.puzzleSourceKey || "playtest:restored",
+              },
+            });
+            restored = true;
+          } else if (restoredSession.mode === "editor" || restoredSession.puzzleSourceKind === "editor") {
+            restoreSnapshotState(restoredSession, {
+              nextPuzzleSource: {
+                kind: "editor",
+                sourceKey: restoredSession.puzzleSourceKey || `editor:${restoredSession.currentPuzzleName}`,
+              },
+            });
+            restored = true;
+          }
         }
+      }
+
+      if (!restored) {
+        setCurrentPuzzleSource(livePuzzleSource);
       }
     } catch {
       // Ignore invalid session snapshots and start fresh.
     } finally {
+      try {
+        window.sessionStorage.setItem(LIVE_GAME_TAB_SOURCE_KEY, livePuzzleSource.sourceKey);
+      } catch {
+        // Ignore tab marker failures and keep the app running.
+      }
       setSessionHydrated(true);
     }
-  }, [isLocalEditorEnabled]);
+  }, [isLocalEditorEnabled, livePuzzleSource, sessionHydrated]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -2566,6 +2756,18 @@ export default function TriangleWordGamePrototypeFixed() {
 
   useEffect(() => {
     if (!sessionHydrated) return;
+    if (!livePuzzleSource) return;
+    if (currentPuzzleSource?.kind && currentPuzzleSource.kind !== "live") return;
+    if (currentPuzzleSource?.sourceKey === livePuzzleSource.sourceKey) return;
+
+    applyLoadedPuzzle(livePuzzleSource.puzzle, livePuzzleSource.name, {
+      nextMode: "player",
+      nextPuzzleSource: livePuzzleSource,
+    });
+  }, [currentPuzzleSource, livePuzzleSource, sessionHydrated]);
+
+  useEffect(() => {
+    if (!sessionHydrated) return;
     if (typeof window === "undefined") return;
 
     const snapshot = {
@@ -2584,19 +2786,29 @@ export default function TriangleWordGamePrototypeFixed() {
       selectedId,
       lastSide,
       currentPuzzleName,
+      showWelcomeBackModal,
+      puzzleSourceKind: currentPuzzleSource?.kind || null,
+      puzzleSourceKey: currentPuzzleSource?.sourceKey || null,
     };
 
     sessionSnapshotRef.current = snapshot;
 
     try {
-      window.sessionStorage.setItem(GAME_SESSION_STORAGE_KEY, JSON.stringify(snapshot));
+      if (currentPuzzleSource?.kind === "live") {
+        window.localStorage.setItem(LIVE_GAME_STATE_STORAGE_KEY, JSON.stringify(snapshot));
+        window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
+        window.sessionStorage.setItem(LIVE_GAME_TAB_SOURCE_KEY, currentPuzzleSource.sourceKey);
+      } else {
+        window.sessionStorage.setItem(GAME_SESSION_STORAGE_KEY, JSON.stringify(snapshot));
+      }
     } catch {
-      // Ignore sessionStorage write failures and keep the in-memory game running.
+      // Ignore storage write failures and keep the in-memory game running.
     }
   }, [
     assistLog,
     clues,
     currentPuzzleName,
+    currentPuzzleSource,
     finishAssistLog,
     finishedState,
     hasStartedGame,
@@ -2609,6 +2821,7 @@ export default function TriangleWordGamePrototypeFixed() {
     sessionHydrated,
     showSolvedModal,
     showStartModal,
+    showWelcomeBackModal,
     squares,
   ]);
 
@@ -2620,24 +2833,25 @@ export default function TriangleWordGamePrototypeFixed() {
       sessionSnapshotRef.current = null;
       try {
         window.sessionStorage.removeItem(GAME_SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(LIVE_GAME_STATE_STORAGE_KEY);
       } catch {
-        // Ignore sessionStorage failures and let the browser continue reloading.
+        // Ignore storage failures and let the browser continue reloading.
       }
     };
 
     const handleKeyDown = (event) => {
-      const isReloadShortcut =
-        event.key === "F5" ||
-        ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "r");
+      const isHardReloadShortcut =
+        event.shiftKey &&
+        ((event.key === "F5") || ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "r"));
 
-      if (isReloadShortcut) {
+      if (isLocalEditorEnabled && isHardReloadShortcut) {
         clearSessionForHardReload();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isLocalEditorEnabled]);
 
   useEffect(() => {
     if (!hasStartedGame || isPaused || mode === "editor" || finishedState) return undefined;
@@ -2677,25 +2891,44 @@ export default function TriangleWordGamePrototypeFixed() {
     const handlePageHide = () => {
       if (!skipSessionRestoreRef.current && sessionSnapshotRef.current) {
         try {
-          window.sessionStorage.setItem(
-            GAME_SESSION_STORAGE_KEY,
-            JSON.stringify(sessionSnapshotRef.current)
-          );
+          if (sessionSnapshotRef.current.puzzleSourceKind === "live") {
+            window.localStorage.setItem(
+              LIVE_GAME_STATE_STORAGE_KEY,
+              JSON.stringify(sessionSnapshotRef.current)
+            );
+            if (sessionSnapshotRef.current.puzzleSourceKey) {
+              window.sessionStorage.setItem(
+                LIVE_GAME_TAB_SOURCE_KEY,
+                sessionSnapshotRef.current.puzzleSourceKey
+              );
+            }
+          } else {
+            window.sessionStorage.setItem(
+              GAME_SESSION_STORAGE_KEY,
+              JSON.stringify(sessionSnapshotRef.current)
+            );
+          }
         } catch {
-          // Ignore sessionStorage write failures during shutdown.
+          // Ignore storage write failures during shutdown.
         }
       }
       pauseFromFocusLoss();
     };
 
+    const handleBeforeUnload = () => {
+      handlePageHide();
+    };
+
     window.addEventListener("blur", pauseFromFocusLoss);
     window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     document.addEventListener("freeze", pauseFromFocusLoss);
 
     return () => {
       window.removeEventListener("blur", pauseFromFocusLoss);
       window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       document.removeEventListener("freeze", pauseFromFocusLoss);
     };
@@ -3511,7 +3744,7 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const applyLoadedPuzzle = (puzzle, nextPuzzleName = "Untitled Puzzle", options = {}) => {
-    const { nextMode = "editor", preserveDebutMenu = false } = options;
+    const { nextMode = "editor", preserveDebutMenu = false, nextPuzzleSource = null } = options;
     const normalized = normalizePuzzleState(puzzle);
     setSquares(normalized.squares);
     setClues(normalized.clues);
@@ -3544,6 +3777,8 @@ export default function TriangleWordGamePrototypeFixed() {
     setActiveHintEditor(null);
     setActiveClueIndex(0);
     setCurrentPuzzleName(nextPuzzleName);
+    setCurrentPuzzleSource(nextPuzzleSource);
+    setShowWelcomeBackModal(false);
     setMode(nextMode === "editor" && isLocalEditorEnabled ? "editor" : "player");
   };
 
@@ -3592,34 +3827,11 @@ export default function TriangleWordGamePrototypeFixed() {
     setActiveButton(null);
     if (!preset) return;
 
-    const normalized = normalizePuzzleState(preset.puzzle);
-    setSquares(normalized.squares);
-    setClues(normalized.clues);
-    setSelectedId(getPreferredSelectedSquareId(normalized.squares));
-    setSelectedIds([]);
-    setLastSide("base");
-    setPlayerLetters(buildBlankPlayerLetters(normalized.squares));
-    setSeconds(0);
-    setHasStartedGame(false);
-    setShowStartModal(true);
-    setIsPaused(false);
-    setShowSolvedModal(false);
-    setFinishedState(null);
-    setAssistLog([]);
-    setFinishAssistLog([]);
+    applyLoadedPuzzle(preset.puzzle, preset.name || slot.label, {
+      nextMode: "player",
+      nextPuzzleSource: buildPlaytestPuzzleSourceDescriptor(slot, preset),
+    });
     setShowHowToPlay(false);
-    setShowHintMenu(false);
-    setShowRevealMenu(false);
-    setOpenHintSection(null);
-    setTypingFlow(false);
-    setSelectionBox(null);
-    setPendingDrag(null);
-    setDragState(null);
-    setHoveredHintTooltip(null);
-    setActiveHintEditor(null);
-    setActiveClueIndex(0);
-    setCurrentPuzzleName(preset.name || slot.label);
-    setMode("player");
     setPuzzleActionStatus(`Loaded ${slot.label}.`);
   };
 
@@ -3639,6 +3851,7 @@ export default function TriangleWordGamePrototypeFixed() {
     applyLoadedPuzzle(entry.puzzle, entry.name || "Untitled Puzzle", {
       nextMode: "editor",
       preserveDebutMenu: true,
+      nextPuzzleSource: buildEditorPuzzleSourceDescriptor(entry.name || "Untitled Puzzle"),
     });
     setShowDebutMenu(true);
     setShowPresetMenu(false);
@@ -3676,6 +3889,7 @@ export default function TriangleWordGamePrototypeFixed() {
       applyLoadedPuzzle(normalizedPuzzle, loaded.name, {
         nextMode: "editor",
         preserveDebutMenu: true,
+        nextPuzzleSource: buildEditorPuzzleSourceDescriptor(loaded.name),
       });
       setPuzzleActionStatus(`Loaded ${loaded.fileName}`);
     } catch (error) {
@@ -3756,6 +3970,7 @@ export default function TriangleWordGamePrototypeFixed() {
         applyLoadedPuzzle(nextActiveDebut.puzzle, nextActiveDebut.name || "Untitled Puzzle", {
           nextMode: "editor",
           preserveDebutMenu: true,
+          nextPuzzleSource: buildEditorPuzzleSourceDescriptor(nextActiveDebut.name || "Untitled Puzzle"),
         });
       } else {
         const fallbackPreset = puzzlePresets[PUZZLE_PRESET_SLOTS[0].id];
@@ -3763,6 +3978,9 @@ export default function TriangleWordGamePrototypeFixed() {
           applyLoadedPuzzle(fallbackPreset.puzzle, fallbackPreset.name || PUZZLE_PRESET_SLOTS[0].label, {
             nextMode: "editor",
             preserveDebutMenu: true,
+            nextPuzzleSource: buildEditorPuzzleSourceDescriptor(
+              fallbackPreset.name || PUZZLE_PRESET_SLOTS[0].label
+            ),
           });
         }
       }
@@ -3885,7 +4103,9 @@ export default function TriangleWordGamePrototypeFixed() {
 
   const readPuzzleFile = async (file) => {
     const loaded = await readPuzzleFromFile(file);
-    applyLoadedPuzzle(loaded.puzzle, loaded.name);
+    applyLoadedPuzzle(loaded.puzzle, loaded.name, {
+      nextPuzzleSource: buildEditorPuzzleSourceDescriptor(loaded.name),
+    });
     setPuzzleActionStatus(`Loaded ${file.name}.`);
   };
 
@@ -4429,6 +4649,8 @@ export default function TriangleWordGamePrototypeFixed() {
   const beginGame = () => {
     setHasStartedGame(true);
     setShowStartModal(false);
+    setShowWelcomeBackModal(false);
+    setIsPaused(false);
   };
 
   const openHowToPlay = () => {
@@ -4464,6 +4686,7 @@ export default function TriangleWordGamePrototypeFixed() {
   };
 
   const resumeGameForPlayerAction = () => {
+    setShowWelcomeBackModal(false);
     if (!hasStartedGame) {
       beginGame();
       return;
@@ -4477,7 +4700,12 @@ export default function TriangleWordGamePrototypeFixed() {
   return (
     <div
       className="min-h-screen"
-      style={{ fontFamily: PLAYER_UI_FONT, background: theme.appBg, color: theme.text }}
+      style={{
+        fontFamily: PLAYER_UI_FONT,
+        background: theme.appBg,
+        color: theme.text,
+        visibility: !sessionHydrated && mode === "player" ? "hidden" : "visible",
+      }}
     >
       <div
         ref={shellRef}
@@ -5970,6 +6198,33 @@ export default function TriangleWordGamePrototypeFixed() {
                 Play
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showWelcomeBackModal && mode === "player" && !showHowToPlay && !finishedState && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-center px-4"
+          style={{ top: `${62 * playerBannerScale}px` }}
+          onClick={resumeGameForPlayerAction}
+        >
+          <div
+            className="relative w-full max-w-[332px] rounded-[28px] border px-7 py-7 text-center shadow-[0_14px_34px_rgba(0,0,0,0.14)]"
+            style={{ background: "#BFE1D6", borderColor: "transparent", color: "#0f1f1a" }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="text-[26px] font-semibold tracking-tight">Welcome back</div>
+            <p className="mt-3 text-[14px] leading-5 text-black/70">
+              The Tryptic awaits...
+            </p>
+            <button
+              type="button"
+              onClick={resumeGameForPlayerAction}
+              className="mt-6 rounded-full px-5 py-2.5 text-[14px] font-medium"
+              style={{ background: "#ffffff", color: "#000000" }}
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
