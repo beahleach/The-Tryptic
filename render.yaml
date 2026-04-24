@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: tryptic-authoring-api
+    runtime: node
+    plan: starter
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm run server
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: TRYPTIC_GITHUB_REPO
+        value: beahleach/The-Tryptic
+      - key: TRYPTIC_GITHUB_BRANCH
+        value: main
+      - key: TRYPTIC_ALLOWED_ORIGINS
+        sync: false
+      - key: TRYPTIC_GITHUB_TOKEN
+        sync: false
+      - key: TRYPTIC_ADMIN_PASSWORD
+        sync: false
+      - key: TRYPTIC_SESSION_SECRET
+        sync: false

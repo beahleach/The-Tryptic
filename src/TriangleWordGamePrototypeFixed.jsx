@@ -14,6 +14,7 @@ import {
   Triangle,
 } from "lucide-react";
 import { fetchPreferences, savePreferences } from "./preferencesApi";
+import { fetchAuthSession, loginAuthoring, logoutAuthoring } from "./authApi";
 import { fetchPuzzlePresets, savePuzzlePresets } from "./puzzlePresetApi";
 import { fetchTriangleDebuts, saveTriangleDebuts } from "./triangleDebutApi";
 import trypticLogo from "./assets/tryptic-logo.png";
@@ -1976,6 +1977,12 @@ function getTriangleGraphicBounds(squares) {
 
 export default function TriangleWordGamePrototypeFixed() {
   const isLocalEditorEnabled = isLocalEditorEnvironment();
+  const [authoringAuth, setAuthoringAuth] = useState({
+    checked: false,
+    authenticated: false,
+    authRequired: false,
+  });
+  const [isAuthoringAuthBusy, setIsAuthoringAuthBusy] = useState(false);
   const [squares, setSquares] = useState(() => getInitialPuzzleState().squares);
   const triangleGraphicBounds = useMemo(() => getTriangleGraphicBounds(squares), [squares]);
   const [selectedId, setSelectedId] = useState(() => getPreferredSelectedSquareId(getInitialPuzzleState().squares));
@@ -2073,6 +2080,7 @@ export default function TriangleWordGamePrototypeFixed() {
   const [debutTimeInput, setDebutTimeInput] = useState(() => buildDefaultTriangleDebutInputs().time);
   const [selectedDebutFileName, setSelectedDebutFileName] = useState("");
   const availablePresetSlots = PUZZLE_PRESET_SLOTS.filter((slot) => puzzlePresets[slot.id]);
+  const isAuthoringEnabled = isLocalEditorEnabled && authoringAuth.authenticated;
   const isEditorContentLocked = false;
   const [sessionHydrated, setSessionHydrated] = useState(false);
   const sessionSnapshotRef = useRef(null);
@@ -2427,6 +2435,39 @@ export default function TriangleWordGamePrototypeFixed() {
 
     let cancelled = false;
 
+    const syncAuthState = async () => {
+      try {
+        const session = await fetchAuthSession();
+        if (cancelled) return;
+        setAuthoringAuth({
+          checked: true,
+          authenticated: Boolean(session?.authenticated),
+          authRequired: Boolean(session?.authRequired),
+        });
+      } catch {
+        if (cancelled) return;
+        setAuthoringAuth({
+          checked: true,
+          authenticated: false,
+          authRequired: true,
+        });
+      }
+    };
+
+    syncAuthState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLocalEditorEnabled]);
+
+  useEffect(() => {
+    if (!isLocalEditorEnabled) return undefined;
+    if (!authoringAuth.checked) return undefined;
+    if (!authoringAuth.authenticated) return undefined;
+
+    let cancelled = false;
+
     const syncPuzzlePresetsFromBackend = async () => {
       try {
         const entries = await fetchPuzzlePresets();
@@ -2476,7 +2517,14 @@ export default function TriangleWordGamePrototypeFixed() {
     return () => {
       cancelled = true;
     };
-  }, [isLocalEditorEnabled]);
+  }, [authoringAuth.authenticated, authoringAuth.checked, isLocalEditorEnabled]);
+
+  useEffect(() => {
+    if (isAuthoringEnabled) return;
+    setShowPresetMenu(false);
+    setShowDebutMenu(false);
+    setShowSettingsPresetMenu(false);
+  }, [isAuthoringEnabled]);
 
   useEffect(() => {
     if (!ENABLE_PREFERENCE_MEMORY) return;
@@ -3410,6 +3458,10 @@ export default function TriangleWordGamePrototypeFixed() {
       enterPlayerMode();
       return;
     }
+    if (authoringAuth.checked && authoringAuth.authRequired && !authoringAuth.authenticated) {
+      promptForAuthoringLogin();
+      return;
+    }
 
     setMode("editor");
     setShowHowToPlay(false);
@@ -3421,6 +3473,45 @@ export default function TriangleWordGamePrototypeFixed() {
     setShowDebutMenu(false);
     setOpenHintSection(null);
     setActiveButton(null);
+  };
+
+  const promptForAuthoringLogin = async () => {
+    if (isAuthoringAuthBusy) return;
+    const password = window.prompt("Enter the authoring password");
+    if (!password) return;
+
+    setIsAuthoringAuthBusy(true);
+    try {
+      const session = await loginAuthoring(password);
+      setAuthoringAuth({
+        checked: true,
+        authenticated: Boolean(session?.authenticated),
+        authRequired: Boolean(session?.authRequired),
+      });
+      setPuzzleActionStatus("Publishing unlocked");
+    } catch {
+      setPuzzleActionStatus("Authoring password rejected");
+    } finally {
+      setIsAuthoringAuthBusy(false);
+    }
+  };
+
+  const handleAuthoringLogout = async () => {
+    if (isAuthoringAuthBusy) return;
+    setIsAuthoringAuthBusy(true);
+    try {
+      const session = await logoutAuthoring();
+      setAuthoringAuth({
+        checked: true,
+        authenticated: Boolean(session?.authenticated),
+        authRequired: Boolean(session?.authRequired),
+      });
+      setPuzzleActionStatus("Publishing locked");
+    } catch {
+      setPuzzleActionStatus("Could not lock publishing");
+    } finally {
+      setIsAuthoringAuthBusy(false);
+    }
   };
 
   const applyLoadedPuzzle = (puzzle, nextPuzzleName = "Untitled Puzzle", options = {}) => {
@@ -4809,6 +4900,7 @@ export default function TriangleWordGamePrototypeFixed() {
                           type="button"
                           onClick={enterEditorMode}
                           aria-label="Editor mode"
+                          disabled={authoringAuth.checked && authoringAuth.authRequired && !authoringAuth.authenticated && isAuthoringAuthBusy}
                           style={{
                             background: mode === "editor" ? theme.text : "transparent",
                             color: mode === "editor" ? theme.shellBg : theme.mutedText,
@@ -4890,7 +4982,7 @@ export default function TriangleWordGamePrototypeFixed() {
                             setShowDebutMenu(false);
                             setShowPresetMenu((prev) => !prev);
                           }}
-                          disabled={isSettingPreset}
+                          disabled={isSettingPreset || !isAuthoringEnabled}
                           className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium disabled:opacity-60"
                         >
                           <Triangle size={15} strokeWidth={1.8} />
@@ -4930,7 +5022,8 @@ export default function TriangleWordGamePrototypeFixed() {
                             setShowPresetMenu(false);
                             setShowDebutMenu((prev) => !prev);
                           }}
-                          className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium"
+                          disabled={!isAuthoringEnabled}
+                          className="flex items-center gap-2 rounded-full border border-[#d8d8d8] bg-white px-3 py-2 text-[14px] font-medium disabled:opacity-60"
                         >
                           <Send size={15} strokeWidth={1.8} />
                           Debut
@@ -5098,6 +5191,27 @@ export default function TriangleWordGamePrototypeFixed() {
                           {puzzleActionStatus}
                         </div>
                       )}
+                      {isLocalEditorEnabled && authoringAuth.checked ? (
+                        authoringAuth.authenticated ? (
+                          <button
+                            type="button"
+                            onClick={handleAuthoringLogout}
+                            className="rounded-full border border-[#d8d8d8] px-3 py-1 text-[12px] text-black/60"
+                            disabled={isAuthoringAuthBusy}
+                          >
+                            {isAuthoringAuthBusy ? "Locking..." : "Publishing unlocked"}
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={promptForAuthoringLogin}
+                            className="rounded-full border border-[#d8d8d8] px-3 py-1 text-[12px] text-black/60"
+                            disabled={isAuthoringAuthBusy}
+                          >
+                            {isAuthoringAuthBusy ? "Unlocking..." : "Unlock publishing"}
+                          </button>
+                        )
+                      ) : null}
                       <div className="max-w-[220px] truncate text-[12px] text-black/50 whitespace-nowrap">
                         {defaultSourceLabel}
                       </div>

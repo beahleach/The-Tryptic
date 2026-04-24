@@ -1,5 +1,7 @@
+import { apiFetch } from "./apiClient";
+
 export async function fetchTriangleDebuts() {
-  const response = await fetch("/api/triangle-debuts");
+  const response = await apiFetch("/api/triangle-debuts");
   if (!response.ok) {
     throw new Error(`Failed to fetch triangle debuts: ${response.status}`);
   }
@@ -7,7 +9,7 @@ export async function fetchTriangleDebuts() {
 }
 
 export async function saveTriangleDebuts(entries) {
-  const response = await fetch("/api/triangle-debuts", {
+  const response = await apiFetch("/api/triangle-debuts", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",

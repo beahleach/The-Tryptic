@@ -1,5 +1,7 @@
+import { apiFetch } from "./apiClient";
+
 export async function fetchPuzzlePresets() {
-  const response = await fetch("http://localhost:8787/api/puzzle-presets");
+  const response = await apiFetch("/api/puzzle-presets");
   if (!response.ok) {
     throw new Error(`Failed to fetch puzzle presets: ${response.status}`);
   }
@@ -7,7 +9,7 @@ export async function fetchPuzzlePresets() {
 }
 
 export async function savePuzzlePresets(presets) {
-  const response = await fetch("http://localhost:8787/api/puzzle-presets", {
+  const response = await apiFetch("/api/puzzle-presets", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
