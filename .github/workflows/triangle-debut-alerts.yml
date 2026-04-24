@@ -40,12 +40,11 @@ jobs:
         run: |
           if [ -s /tmp/triangleDebutScheduleAlerts.txt ]; then
             echo "HAS_SCHEDULE_ALERTS=true" >> "$GITHUB_ENV"
-            DELIM="$(uuidgen)"
-            {
-              echo "SCHEDULE_ALERT_BODY<<$DELIM"
-              cat /tmp/triangleDebutScheduleAlerts.txt
-              echo "$DELIM"
-            } >> "$GITHUB_ENV"
+            BODY="$(cat /tmp/triangleDebutScheduleAlerts.txt)"
+            BODY="${BODY//'%'/'%25'}"
+            BODY="${BODY//$'\n'/'%0A'}"
+            BODY="${BODY//$'\r'/'%0D'}"
+            echo "SCHEDULE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
           fi
 
       - name: Email schedule change alerts
@@ -69,12 +68,11 @@ jobs:
         run: |
           if [ -s /tmp/triangleDebutLiveAlert.txt ]; then
             echo "HAS_LIVE_ALERT=true" >> "$GITHUB_ENV"
-            DELIM="$(uuidgen)"
-            {
-              echo "LIVE_ALERT_BODY<<$DELIM"
-              cat /tmp/triangleDebutLiveAlert.txt
-              echo "$DELIM"
-            } >> "$GITHUB_ENV"
+            BODY="$(cat /tmp/triangleDebutLiveAlert.txt)"
+            BODY="${BODY//'%'/'%25'}"
+            BODY="${BODY//$'\n'/'%0A'}"
+            BODY="${BODY//$'\r'/'%0D'}"
+            echo "LIVE_ALERT_BODY=$BODY" >> "$GITHUB_ENV"
           fi
 
       - name: Email live or fallback alert
