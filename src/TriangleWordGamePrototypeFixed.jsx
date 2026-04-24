@@ -12,6 +12,8 @@ import {
   Save,
   FolderOpen,
   Triangle,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 import { fetchPreferences, savePreferences } from "./preferencesApi";
 import { fetchAuthSession, loginAuthoring, logoutAuthoring } from "./authApi";
@@ -5191,19 +5193,21 @@ export default function TriangleWordGamePrototypeFixed() {
                           <button
                             type="button"
                             onClick={handleAuthoringLogout}
-                            className="rounded-full border border-[#d8d8d8] px-3 py-1 text-[12px] text-black/60"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#9fd3ad] bg-[#e7f7eb] px-3 py-1 text-[12px] font-medium text-[#1e7a37]"
                             disabled={isAuthoringAuthBusy}
                           >
+                            <LockOpen size={13} strokeWidth={2} />
                             {isAuthoringAuthBusy ? "Locking..." : "Publishing unlocked"}
                           </button>
                         ) : (
                           <button
                             type="button"
                             onClick={promptForAuthoringLogin}
-                            className="rounded-full border border-[#d8d8d8] px-3 py-1 text-[12px] text-black/60"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#e0a6a6] bg-[#fff0f0] px-3 py-1 text-[12px] font-medium text-[#b42318]"
                             disabled={isAuthoringAuthBusy}
                           >
-                            {isAuthoringAuthBusy ? "Unlocking..." : "Unlock publishing"}
+                            <Lock size={13} strokeWidth={2} />
+                            {isAuthoringAuthBusy ? "Unlocking..." : "Publishing locked"}
                           </button>
                         )
                       ) : null}
