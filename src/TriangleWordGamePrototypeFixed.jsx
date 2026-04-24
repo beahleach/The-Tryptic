@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   Settings,
   HelpCircle,
@@ -40,11 +40,13 @@ function getBundledTemplateSquares(fileName) {
   return squares;
 }
 
-const defaultPuzzleFileRaw = getBundledPresetPuzzleRaw("SKIP_PAWN_STERN.try");
-const presetGuffawGadgetWartRaw = getBundledPresetPuzzleRaw("GUFFAW_GADGET_WART.try");
-const presetScrubBleepStompRaw = getBundledPresetPuzzleRaw("SCRUB_BLEEP_STOMP.try");
-const presetWaningWanderGatorRaw = getBundledPresetPuzzleRaw("WANING_WANDER_GATOR.try");
-const presetBenchHalalBabelRaw = getBundledPresetPuzzleRaw("BENCH_HALAL_BABEL.try");
+const BUNDLED_PUZZLE_PRESET_RAWS = {
+  "triangle-1": { fileName: "SKIP_PAWN_STERN.try" },
+  "triangle-2": { fileName: "GUFFAW_GADGET_WART.try" },
+  "triangle-3": { fileName: "SCRUB_BLEEP_STOMP.try" },
+  "triangle-4": { fileName: "WANING_WANDER_GATOR.try" },
+  "triangle-5": { fileName: "BENCH_HALAL_BABEL.try" },
+};
 
 const CELL_SIZE = 96;
 const BORDER_WIDTH = 6;
@@ -244,17 +246,13 @@ function ModeToggleSpacer({ theme }) {
   );
 }
 
-const BUNDLED_PUZZLE_PRESET_RAWS = {
-  "triangle-1": { fileName: "SKIP_PAWN_STERN.try", raw: defaultPuzzleFileRaw },
-  "triangle-2": { fileName: "GUFFAW_GADGET_WART.try", raw: presetGuffawGadgetWartRaw },
-  "triangle-3": { fileName: "SCRUB_BLEEP_STOMP.try", raw: presetScrubBleepStompRaw },
-  "triangle-4": { fileName: "WANING_WANDER_GATOR.try", raw: presetWaningWanderGatorRaw },
-  "triangle-5": { fileName: "BENCH_HALAL_BABEL.try", raw: presetBenchHalalBabelRaw },
-};
+for (const preset of Object.values(BUNDLED_PUZZLE_PRESET_RAWS)) {
+  preset.raw = getBundledPresetPuzzleRaw(preset.fileName);
+}
 
 function parseDefaultPuzzleFile() {
   try {
-    return JSON.parse(defaultPuzzleFileRaw);
+    return JSON.parse(BUNDLED_PUZZLE_PRESET_RAWS["triangle-1"].raw);
   } catch {
     return { name: "Untitled Puzzle", puzzle: {} };
   }
@@ -332,7 +330,7 @@ function renderCluePartsExplanation(line) {
         {segment}
       </span>
     ) : (
-      <React.Fragment key={`${segment}-${index}`}>{segment}</React.Fragment>
+      <Fragment key={`${segment}-${index}`}>{segment}</Fragment>
     )
   );
 }
@@ -1166,7 +1164,7 @@ function MiniClueBoxExample({ theme, fontFamily, fixedFontSize, highlightStyles 
           {segment.text}
         </strong>
       ) : (
-        <React.Fragment key={`${index}-${segment.text}`}>{segment.text}</React.Fragment>
+        <Fragment key={`${index}-${segment.text}`}>{segment.text}</Fragment>
       )
     );
 
@@ -6012,7 +6010,7 @@ export default function TriangleWordGamePrototypeFixed() {
                     {segment.text}
                   </strong>
                 ) : (
-                  <React.Fragment key={`${index}-${segment.text}`}>{segment.text}</React.Fragment>
+                  <Fragment key={`${index}-${segment.text}`}>{segment.text}</Fragment>
                 )
             )}
           </span>
