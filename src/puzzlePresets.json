@@ -1,1 +1,624 @@
-{}
+{
+  "triangle-1": {
+    "name": "SKIP_PAWN_STERN",
+    "fileName": "SKIP_PAWN_STERN.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 264,
+          "y": 168,
+          "letter": "P"
+        },
+        {
+          "id": "i",
+          "type": "left",
+          "x": 168,
+          "y": 264,
+          "letter": "I"
+        },
+        {
+          "id": "a",
+          "type": "right",
+          "x": 360,
+          "y": 264,
+          "letter": "A"
+        },
+        {
+          "id": "k",
+          "type": "left",
+          "x": 120,
+          "y": 360,
+          "letter": "K"
+        },
+        {
+          "id": "w",
+          "type": "right",
+          "x": 408,
+          "y": 360,
+          "letter": "W"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 72,
+          "y": 456,
+          "letter": "S"
+        },
+        {
+          "id": "b1",
+          "type": "base",
+          "x": 168,
+          "y": 456,
+          "letter": "T"
+        },
+        {
+          "id": "b2",
+          "type": "base",
+          "x": 264,
+          "y": 456,
+          "letter": "E"
+        },
+        {
+          "id": "b3",
+          "type": "base",
+          "x": 360,
+          "y": 456,
+          "letter": "R"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 456,
+          "y": 456,
+          "letter": "N"
+        }
+      ],
+      "clues": [
+        {
+          "html": "“<span data-highlight-type=\"definition\" style=\"background-color: #ff7a7a; border-radius: 0.28em; padding: 0;\">I’LL PASS</span>” (<span data-highlight-type=\"fodder\" style=\"background-color: #ffb457; border-radius: 0.28em; padding: 0;\">SKI TRIP</span> <span data-highlight-type=\"wordplay\" style=\"background-color: #ffe97a; border-radius: 0.28em; padding: 0;\">MISSING AUDIBLE</span> <span data-highlight-type=\"fodder\" style=\"background-color: #ffb457; border-radius: 0.28em; padding: 0;\">EFFORT</span>) (4)",
+          "plainText": "“I’LL PASS” (SKI TRIP MISSING AUDIBLE EFFORT) (4)",
+          "hints": {
+            "wordplay": "The wordplay is \"missing\" and \"audible\": one signals that we'll have to [delete] some fodder from some other fodder, and one signals that we'll need to find a [homophone] for some fodder (or its substitution).",
+            "fodder": "The fodder is \"ski trip\" and \"effort,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"I'll pass.\" "
+          }
+        },
+        {
+          "html": "<span data-highlight-type=\"definition\" style=\"background-color: #ff7a7a; border-radius: 0.28em; padding: 0;\">ATTEMPT TO SELL</span> <span data-highlight-type=\"fodder\" style=\"background-color: #ffb457; border-radius: 0.28em; padding: 0;\">WHISKEY</span> <span data-highlight-type=\"wordplay\" style=\"background-color: #ffe97a; border-radius: 0.28em; padding: 0;\">IN</span> <span data-highlight-type=\"fodder\" style=\"background-color: #ffb457; border-radius: 0.28em; padding: 0;\">PAN</span> (4)",
+          "plainText": "ATTEMPT TO SELL WHISKEY IN PAN (4)",
+          "hints": {
+            "wordplay": "The wordplay is \"in,\" signaling us to [insert] some fodder into another piece of fodder.",
+            "fodder": "The fodder is \"whiskey\" and \"pan,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"attempt to sell.\""
+          }
+        },
+        {
+          "html": "<span data-highlight-type=\"wordplay\" style=\"background-color: #ffe97a; border-radius: 0.28em; padding: 0;\">MOTHERLESS</span> <span data-highlight-type=\"fodder\" style=\"background-color: #ffb457; border-radius: 0.28em; padding: 0;\">MASTER IN</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">REARMOST</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">PART OF SHIP</span> (5)",
+          "plainText": "MOTHERLESS MASTER IN REARMOST PART OF SHIP (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"motherless\" and \"rearmost\": one signals to [delete] mother (or its substitution) from some adjacent fodder, and one signals to [select] the rearmost part of some fodder.",
+            "fodder": "The fodder is \"master\" and \"in,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"part of ship.\""
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-24T16:14:42.890Z"
+  },
+  "triangle-2": {
+    "name": "BENCH_HALAL_BABEL",
+    "fileName": "BENCH_HALAL_BABEL.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 648,
+          "y": 264,
+          "letter": "H"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 456,
+          "y": 648,
+          "letter": "B"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 840,
+          "y": 648,
+          "letter": "L"
+        },
+        {
+          "id": "sq_1776185526928_7k2c9",
+          "type": "base",
+          "x": 552,
+          "y": 648,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776185527077_lxjkr",
+          "type": "base",
+          "x": 648,
+          "y": 648,
+          "letter": "B"
+        },
+        {
+          "id": "sq_1776185527210_suuh0",
+          "type": "base",
+          "x": 744,
+          "y": 648,
+          "letter": "E"
+        },
+        {
+          "id": "sq_1776186150878_j1tel",
+          "type": "left",
+          "x": 504,
+          "y": 552,
+          "letter": "E"
+        },
+        {
+          "id": "sq_1776186151025_peovy",
+          "type": "left",
+          "x": 552,
+          "y": 456,
+          "letter": "N"
+        },
+        {
+          "id": "sq_1776186151157_fdd0i",
+          "type": "left",
+          "x": 600,
+          "y": 360,
+          "letter": "C"
+        },
+        {
+          "id": "sq_1776186164992_clnvz",
+          "type": "right",
+          "x": 792,
+          "y": 552,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776186165124_p2csu",
+          "type": "right",
+          "x": 744,
+          "y": 456,
+          "letter": "L"
+        },
+        {
+          "id": "sq_1776186165258_u1cjc",
+          "type": "right",
+          "x": 696,
+          "y": 360,
+          "letter": "A"
+        }
+      ],
+      "clues": [
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">nbc</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">begins</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">homecoming episode</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">harassing</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">those suspended from play</span> (5)",
+          "plainText": "NBC BEGINS HOMECOMING EPISODE HARASSING THOSE SUSPENDED FROM PLAY (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"begins\" and \"harassing\": one signals we'll need to [select] the beginning letters of some fodder, and one signals we'll have to harass some fodder [anagram].",
+            "fodder": "The fodder is \"NBC\" and \"homecoming episode.\"",
+            "definition": "The definition is \"those suspended from play.\""
+          }
+        },
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">agricultural</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">leader ENTERS</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">hall</span>: <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">pork is NOW off-limits</span>. (5)",
+          "plainText": "AGRICULTURAL LEADER ENTERS HALL: PORK IS NOW OFF-LIMITS. (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"leader\" and \"enters\": one signals we'll need to [select] the leader/first letter of some fodder, and one signals some fodder will need to enter some other fodder [insertion].",
+            "fodder": "The fodder is \"agricultural\" and \"hall.\"",
+            "definition": "The definition is \"pork is now off-limits,\" and our answer will be a humorous equivalent."
+          }
+        },
+        {
+          "html": "<div><span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">old tower</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">fermented</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">aLE</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">infested with</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">bees</span> (5)</div>",
+          "plainText": "OLD TOWER FERMENTED ALE INFESTED WITH BEES (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"fermented\" and \"infested with\": one signals we'll need to infest some fodder with some other fodder [insertion], and one signals we'll then need to ferment the fodder [anagram].",
+            "fodder": "The fodder is \"ale\" and \"bees,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"old tower,\" and our answer will be an example of that."
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-23T15:06:34.285Z"
+  },
+  "triangle-3": {
+    "name": "GUFFAW_",
+    "fileName": "GUFFAW_GADGET_WART.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 144,
+          "y": 168,
+          "letter": "G"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 144,
+          "y": 648,
+          "letter": "W"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 432,
+          "y": 648,
+          "letter": "T"
+        },
+        {
+          "id": "sq_1776301271751_9q19r",
+          "type": "left",
+          "x": 144,
+          "y": 264,
+          "letter": "U"
+        },
+        {
+          "id": "sq_1776301271898_rgfwy",
+          "type": "left",
+          "x": 144,
+          "y": 360,
+          "letter": "F"
+        },
+        {
+          "id": "sq_1776301271998_1gqwl",
+          "type": "left",
+          "x": 144,
+          "y": 456,
+          "letter": "F"
+        },
+        {
+          "id": "sq_1776301272131_ewid7",
+          "type": "left",
+          "x": 144,
+          "y": 552,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776301326333_6rffz",
+          "type": "base",
+          "x": 240,
+          "y": 648,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776301326615_33rkq",
+          "type": "base",
+          "x": 336,
+          "y": 648,
+          "letter": "R"
+        },
+        {
+          "id": "sq_1776301675282_hz7rq",
+          "type": "right",
+          "x": 240,
+          "y": 264,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776301675598_5cbcq",
+          "type": "right",
+          "x": 288,
+          "y": 360,
+          "letter": "D"
+        },
+        {
+          "id": "sq_1776301675749_gqg9e",
+          "type": "right",
+          "x": 336,
+          "y": 456,
+          "letter": "G"
+        },
+        {
+          "id": "sq_1776301675866_avxh3",
+          "type": "right",
+          "x": 384,
+          "y": 552,
+          "letter": "E"
+        }
+      ],
+      "clues": [
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">GURL U FAM FR AF, WDYT</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">1ST</span> <span style=\"border-radius: 0.28em; padding: 0px; text-underline-offset: 0.14em; background-color: rgb(255, 122, 122);\" data-definition-highlight=\"true\" data-highlight-type=\"definition\">LOL</span> (6)",
+          "plainText": "GURL U FAM FR AF, WDYT 1ST LOL (6)",
+          "hints": {
+            "wordplay": "The wordplay is \"1st,\" signaling we'll need to [select] the first letters of the fodder.",
+            "fodder": "The fodder is \"gurl u fam fr af wdyt.\"",
+            "definition": "The definition is \"LOL\"."
+          }
+        },
+        {
+          "html": "<span style=\"border-radius: 0.28em; padding: 0px; text-underline-offset: 0.14em; background-color: rgb(255, 122, 122);\" data-definition-highlight=\"true\" data-highlight-type=\"definition\">inspector</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">get</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">stabbed with twisted HALF</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">dagger</span> (6)",
+          "plainText": "INSPECTOR GET STABBED WITH TWISTED HALF DAGGER (6)",
+          "hints": {
+            "wordplay": "The wordplay is \"stabbed with,\" \"twisted,\" and \"half\": one signals we'll need to stab some fodder with some other fodder [insertion], one signals we'll need to twist some fodder [anagram], and one signals we'll need to [select] half of some fodder.",
+            "fodder": "The fodder is \"get\" and \"dagger.\"",
+            "definition": "The definition is \"inspector,\" and our answer will be a pop culture reference."
+          }
+        },
+        {
+          "html": "<span style=\"text-underline-offset: 0.14em; border-radius: 0.28em; padding: 0px;\" data-definition-highlight=\"true\"><span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">HUMAN PAPILLOMAVIRUS</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">begins</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">wedging among rugged tarsals</span></span>  (4)",
+          "plainText": "HUMAN PAPILLOMAVIRUS BEGINS WEDGING AMONG RUGGED TARSALS (4)",
+          "hints": {
+            "wordplay": "The wordplay is \"begins,\" signaling we'll need to [select] the beginning letters of our fodder.",
+            "fodder": "The fodder is \"wedging among rugged tarsals.\"",
+            "definition": "The definition is \"human papillomavirus\" (probably worth a Google)."
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-23T15:06:39.175Z"
+  },
+  "triangle-4": {
+    "name": "SCRUB_BLEEP_STOMP",
+    "fileName": "SCRUB_BLEEP_STOMP.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 600,
+          "y": 408,
+          "letter": "B"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 408,
+          "y": 792,
+          "letter": "S"
+        },
+        {
+          "id": "b1",
+          "type": "base",
+          "x": 504,
+          "y": 792,
+          "letter": "T"
+        },
+        {
+          "id": "b2",
+          "type": "base",
+          "x": 600,
+          "y": 792,
+          "letter": "O"
+        },
+        {
+          "id": "b3",
+          "type": "base",
+          "x": 696,
+          "y": 792,
+          "letter": "M"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 792,
+          "y": 792,
+          "letter": "P"
+        },
+        {
+          "id": "sq_1776437386618_9071f",
+          "type": "left",
+          "x": 456,
+          "y": 696,
+          "letter": "C"
+        },
+        {
+          "id": "sq_1776437386768_ils8s",
+          "type": "left",
+          "x": 504,
+          "y": 600,
+          "letter": "R"
+        },
+        {
+          "id": "sq_1776437386883_fr05d",
+          "type": "left",
+          "x": 552,
+          "y": 504,
+          "letter": "U"
+        },
+        {
+          "id": "sq_1776437397401_ji9gs",
+          "type": "right",
+          "x": 648,
+          "y": 504,
+          "letter": "L"
+        },
+        {
+          "id": "sq_1776437397552_ic7t4",
+          "type": "right",
+          "x": 744,
+          "y": 696,
+          "letter": "E"
+        },
+        {
+          "id": "sq_1776437397718_mb1za",
+          "type": "right",
+          "x": 696,
+          "y": 600,
+          "letter": "E"
+        }
+      ],
+      "clues": [
+        {
+          "html": "<span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">half-hearted</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">RUCkUS</span>/ <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">b.s.</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">horribly</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">unwanted by TLC</span> (5)",
+          "plainText": "HALF-HEARTED RUCKUS/ B.S. HORRIBLY UNWANTED BY TLC (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"half-hearted\" and \"horribly\": one signals we'll need to [select] half of some fodder, and one signals we'll need to make some fodder horrible [anagram].",
+            "fodder": "The fodder is \"ruckus\" and \"B.S.\"",
+            "definition": "The definition is \"unwanted by TLC,\" and our answer will be a pop culture reference."
+          }
+        },
+        {
+          "html": "\"<span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">&amp;$!#%</span>\" <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">immediately</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">Bellowed</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">by</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">banana skin</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">slippage</span> (5)",
+          "plainText": "\"&$!#%\" IMMEDIATELY BELLOWED BY BANANA SKIN SLIPPAGE (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"immediately,\" \"by,\" and \"slippage\": one signals we'll need to [select] the most immediate part/ beginning of some fodder, one signals we'll need to [place] some fodder by some other fodder, and one signals some fodder will slip [reversal].",
+            "fodder": "The fodder is \"bellowed\" and \"banana skin,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"&$!#%,\" and our answer will literally be that."
+          }
+        },
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">optimus</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">prime transformers</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">make a ton of noise while moving around</span> (5)",
+          "plainText": "OPTIMUS PRIME TRANSFORMERS MAKE A TON OF NOISE WHILE MOVING AROUND (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"prime\" and \"transformers\": one signals we'll need to [select] the prime (for the purposes of this exercise, we'll take 1 to be a prime number) letters of   some fodder, and one signals we'll need to transform some fodder [anagram].",
+            "fodder": "The fodder is \"optimus.\"",
+            "definition": "The definition is \"make a ton of noise while moving around.\""
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-23T15:06:47.086Z"
+  },
+  "triangle-5": {
+    "name": "WANING_WANDER_GATOR",
+    "fileName": "WANING_WANDER_GATOR.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 288,
+          "y": 120,
+          "letter": "W"
+        },
+        {
+          "id": "i",
+          "type": "left",
+          "x": 288,
+          "y": 408,
+          "letter": "I"
+        },
+        {
+          "id": "a",
+          "type": "right",
+          "x": 456,
+          "y": 312,
+          "letter": "N"
+        },
+        {
+          "id": "k",
+          "type": "left",
+          "x": 288,
+          "y": 504,
+          "letter": "N"
+        },
+        {
+          "id": "w",
+          "type": "right",
+          "x": 600,
+          "y": 504,
+          "letter": "E"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 288,
+          "y": 600,
+          "letter": "G"
+        },
+        {
+          "id": "b1",
+          "type": "base",
+          "x": 384,
+          "y": 600,
+          "letter": "A"
+        },
+        {
+          "id": "b2",
+          "type": "base",
+          "x": 480,
+          "y": 600,
+          "letter": "T"
+        },
+        {
+          "id": "b3",
+          "type": "base",
+          "x": 576,
+          "y": 600,
+          "letter": "O"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 672,
+          "y": 600,
+          "letter": "R"
+        },
+        {
+          "id": "sq_1776117701201_9w6lq",
+          "type": "left",
+          "x": 288,
+          "y": 216,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776117701332_69q59",
+          "type": "left",
+          "x": 288,
+          "y": 312,
+          "letter": "N"
+        },
+        {
+          "id": "sq_1776117714882_9tm1r",
+          "type": "right",
+          "x": 384,
+          "y": 216,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776117715533_jgo4h",
+          "type": "right",
+          "x": 528,
+          "y": 408,
+          "letter": "D"
+        }
+      ],
+      "clues": [
+        {
+          "html": "<span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">broken</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">awning</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">decreasing visibility</span> (6)",
+          "plainText": "BROKEN AWNING DECREASING VISIBILITY (6)",
+          "hints": {
+            "wordplay": "The wordplay is \"broken,\" signaling we'll need to break some fodder [anagram].",
+            "fodder": "The fodder is \"awning.\"",
+            "definition": "The definition is \"decreasing visibility.\""
+          }
+        },
+        {
+          "html": "\"<span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">Get lost</span>!\": <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">rad new</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">craze</span> (6)",
+          "plainText": "\"GET LOST!\": RAD NEW CRAZE (6)",
+          "hints": {
+            "wordplay": "The wordplay is \"craze,\" signaling we'll need to make some fodder crazy [anagram].",
+            "fodder": "The fodder is \"rad new.\"",
+            "definition": "The definition is \"get lost.\""
+          }
+        },
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">tag</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">on backwards finishes</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">poor</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">croc alternative</span> (5) ",
+          "plainText": "TAG ON BACKWARDS FINISHES POOR CROC ALTERNATIVE (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"on backwards\" and \"finishes\": one signals we'll need to put some fodder on backwards [reversal], and one signals we'll need to [select] the ends of some fodder.",
+            "fodder": "The fodder is \"tag\" and \"poor.\"",
+            "definition": "The definition is \"croc alternative,\" and our answer will be a humorous equivalent."
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-23T15:06:52.135Z"
+  }
+}
