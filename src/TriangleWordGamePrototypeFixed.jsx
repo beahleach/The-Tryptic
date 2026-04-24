@@ -3458,10 +3458,6 @@ export default function TriangleWordGamePrototypeFixed() {
       enterPlayerMode();
       return;
     }
-    if (authoringAuth.checked && authoringAuth.authRequired && !authoringAuth.authenticated) {
-      promptForAuthoringLogin();
-      return;
-    }
 
     setMode("editor");
     setShowHowToPlay(false);
@@ -4900,7 +4896,6 @@ export default function TriangleWordGamePrototypeFixed() {
                           type="button"
                           onClick={enterEditorMode}
                           aria-label="Editor mode"
-                          disabled={authoringAuth.checked && authoringAuth.authRequired && !authoringAuth.authenticated && isAuthoringAuthBusy}
                           style={{
                             background: mode === "editor" ? theme.text : "transparent",
                             color: mode === "editor" ? theme.shellBg : theme.mutedText,
