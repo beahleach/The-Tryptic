@@ -1,1 +1,128 @@
-[]
+[
+  {
+    "name": "BENCH_HALAL_BABEL",
+    "fileName": "BENCH_HALAL_BABEL.try",
+    "puzzle": {
+      "version": 1,
+      "squares": [
+        {
+          "id": "p",
+          "type": "topCorner",
+          "x": 648,
+          "y": 264,
+          "letter": "H"
+        },
+        {
+          "id": "s",
+          "type": "bottomLeftCorner",
+          "x": 456,
+          "y": 648,
+          "letter": "B"
+        },
+        {
+          "id": "n",
+          "type": "bottomRightCorner",
+          "x": 840,
+          "y": 648,
+          "letter": "L"
+        },
+        {
+          "id": "sq_1776185526928_7k2c9",
+          "type": "base",
+          "x": 552,
+          "y": 648,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776185527077_lxjkr",
+          "type": "base",
+          "x": 648,
+          "y": 648,
+          "letter": "B"
+        },
+        {
+          "id": "sq_1776185527210_suuh0",
+          "type": "base",
+          "x": 744,
+          "y": 648,
+          "letter": "E"
+        },
+        {
+          "id": "sq_1776186150878_j1tel",
+          "type": "left",
+          "x": 504,
+          "y": 552,
+          "letter": "E"
+        },
+        {
+          "id": "sq_1776186151025_peovy",
+          "type": "left",
+          "x": 552,
+          "y": 456,
+          "letter": "N"
+        },
+        {
+          "id": "sq_1776186151157_fdd0i",
+          "type": "left",
+          "x": 600,
+          "y": 360,
+          "letter": "C"
+        },
+        {
+          "id": "sq_1776186164992_clnvz",
+          "type": "right",
+          "x": 792,
+          "y": 552,
+          "letter": "A"
+        },
+        {
+          "id": "sq_1776186165124_p2csu",
+          "type": "right",
+          "x": 744,
+          "y": 456,
+          "letter": "L"
+        },
+        {
+          "id": "sq_1776186165258_u1cjc",
+          "type": "right",
+          "x": 696,
+          "y": 360,
+          "letter": "A"
+        }
+      ],
+      "clues": [
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">nbc</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">begins</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">homecoming episode</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">harassing</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">those suspended from play</span> (5)",
+          "plainText": "NBC BEGINS HOMECOMING EPISODE HARASSING THOSE SUSPENDED FROM PLAY (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"begins\" and \"harassing\": one signals we'll need to [select] the beginning letters of some fodder, and one signals we'll have to harass some fodder [anagram].",
+            "fodder": "The fodder is \"NBC\" and \"homecoming episode.\"",
+            "definition": "The definition is \"those suspended from play.\""
+          }
+        },
+        {
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">agricultural</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">leader ENTERS</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">hall</span>: <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">pork is NOW off-limits</span>. (5)",
+          "plainText": "AGRICULTURAL LEADER ENTERS HALL: PORK IS NOW OFF-LIMITS. (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"leader\" and \"enters\": one signals we'll need to [select] the leader/first letter of some fodder, and one signals some fodder will need to enter some other fodder [insertion].",
+            "fodder": "The fodder is \"agricultural\" and \"hall.\"",
+            "definition": "The definition is \"pork is now off-limits,\" and our answer will be a humorous equivalent."
+          }
+        },
+        {
+          "html": "<div><span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">old tower</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">fermented</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">aLE</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">infested with</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">bees</span> (5)</div>",
+          "plainText": "OLD TOWER FERMENTED ALE INFESTED WITH BEES (5)",
+          "hints": {
+            "wordplay": "The wordplay is \"fermented\" and \"infested with\": one signals we'll need to infest some fodder with some other fodder [insertion], and one signals we'll then need to ferment the fodder [anagram].",
+            "fodder": "The fodder is \"ale\" and \"bees,\" of which for one we'll need a substitution.",
+            "definition": "The definition is \"old tower,\" and our answer will be an example of that."
+          }
+        }
+      ]
+    },
+    "updatedAt": "2026-04-25T03:17:27.734Z",
+    "id": "debut-1777028400000-w72rh4",
+    "startsAt": "2026-04-24T11:00:00.000Z",
+    "endsAt": "2026-04-26T11:00:00.000Z"
+  }
+]
