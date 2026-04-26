@@ -201,12 +201,12 @@
       ],
       "clues": [
         {
-          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">nbc</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">begins</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">homecoming episode</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">harassing</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">those suspended from play</span> (5)",
-          "plainText": "NBC BEGINS HOMECOMING EPISODE HARASSING THOSE SUSPENDED FROM PLAY (5)",
+          "html": "<span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">nbc</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">begins</span> <span style=\"background-color: rgb(255, 180, 87); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"fodder\">homecoming episode</span> <span style=\"background-color: rgb(255, 233, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"wordplay\">harassing</span> <span style=\"background-color: rgb(255, 122, 122); border-radius: 0.28em; padding: 0px;\" data-highlight-type=\"definition\">those not playing</span> (5)",
+          "plainText": "NBC BEGINS HOMECOMING EPISODE HARASSING THOSE NOT PLAYING (5)",
           "hints": {
             "wordplay": "The wordplay is \"begins\" and \"harassing\": one signals we'll need to [select] the beginning letters of some fodder, and one signals we'll have to harass some fodder [anagram].",
             "fodder": "The fodder is \"NBC\" and \"homecoming episode.\"",
-            "definition": "The definition is \"those suspended from play.\""
+            "definition": "The definition is \"those not playing.\""
           }
         },
         {
@@ -229,7 +229,7 @@
         }
       ]
     },
-    "updatedAt": "2026-04-24T16:14:52.675Z"
+    "updatedAt": "2026-04-26T17:02:24.655Z"
   },
   "triangle-3": {
     "name": "GUFFAW_",
