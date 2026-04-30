@@ -1,5 +1,85 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Demi.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-DemiItalic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-Heavy.woff2") format("woff2");
+  font-weight: 800 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tryptic Avenir";
+  src: url("./assets/fonts/AvenirNextCyr-HeavyItalic.woff2") format("woff2");
+  font-weight: 800 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 html,
 body,
 #root {
@@ -8,5 +88,5 @@ body,
 }
 
 body {
-  font-family: "Avenir Next", "Avenir", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Tryptic Avenir", "Avenir Next", "Avenir", "Aptos", "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
 }
