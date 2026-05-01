@@ -3,6 +3,9 @@ import {
   Settings,
   HelpCircle,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Delete,
   Pencil,
   Send,
   Play,
@@ -74,6 +77,10 @@ const PLAYER_STACKED_BOTTOM_PADDING = 32;
 const PLAYER_STACKED_TRIANGLE_SCALE = 0.75;
 const PLAYER_STACKED_TRIANGLE_SCALE_BOOST = 1.1;
 const PLAYER_STACKED_CLUE_SCALE = 0.95;
+const PLAYER_MOBILE_CLUE_HEIGHT = 124;
+const PLAYER_MOBILE_KEYBOARD_HEIGHT = 150;
+const PLAYER_MOBILE_BOARD_PADDING = 18;
+const PLAYER_MOBILE_BOARD_CLUE_GAP = 10;
 const PLAYER_TRIANGLE_CLUE_RATIO = 10 / 12;
 const PLAYER_TRIANGLE_CLIP_BUFFER = 18;
 const PLAYER_HORIZONTAL_CENTER_LANE_RATIO = 0.27;
@@ -162,6 +169,9 @@ const PALETTE_ITEMS = [
 ];
 
 const CLUE_SIDE_KEYS = ["left", "right", "base"];
+const MOBILE_LEFT_ARROW_SIDE_KEYS = ["base", "left", "right"];
+const MOBILE_RIGHT_ARROW_SIDE_KEYS = ["base", "right", "left"];
+const MOBILE_QWERTY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
 const HINT_SECTIONS = [
   { heading: "Left", items: ["Wordplay", "Fodder", "Definition"] },
@@ -232,6 +242,51 @@ const HINT_TOOLTIP_HOVER_DELAY_MS = 250;
 const HINT_TOOLTIP_MOVE_TOLERANCE_PX = 10;
 const HINT_TOOLTIP_FONT_SIZE_PX = 15;
 const HINT_TOOLTIP_BORDER_CHROME_PX = 4;
+
+function isExplicitMobileDevice() {
+  if (typeof navigator === "undefined") return false;
+
+  if (typeof navigator.userAgentData?.mobile === "boolean") {
+    return navigator.userAgentData.mobile;
+  }
+
+  const userAgent = navigator.userAgent || "";
+  const touchCapable = (navigator.maxTouchPoints || 0) > 0;
+  return touchCapable && /Android|iPhone|iPad|iPod|Mobi|Windows Phone/i.test(userAgent);
+}
+
+function getDeviceSpecificPageHeight() {
+  if (typeof window === "undefined") return 720;
+
+  const visualViewportHeight = window.visualViewport?.height || 0;
+  const innerHeight = window.innerHeight || 0;
+  const screenHeight = window.screen?.availHeight || window.screen?.height || 0;
+  const measuredHeights = [visualViewportHeight, innerHeight, screenHeight].filter((height) => height > 0);
+
+  return measuredHeights.length ? Math.min(...measuredHeights) : 720;
+}
+
+function getDeviceMaxPageHeight() {
+  if (typeof window === "undefined") return 720;
+
+  const visualViewportHeight = window.visualViewport?.height || 0;
+  const innerHeight = window.innerHeight || 0;
+  const measuredHeights = [visualViewportHeight, innerHeight].filter((height) => height > 0);
+
+  return measuredHeights.length ? Math.max(...measuredHeights) : 720;
+}
+
+function getDeviceSpecificPageWidth() {
+  if (typeof window === "undefined") return 390;
+
+  const visualViewportWidth = window.visualViewport?.width || 0;
+  const innerWidth = window.innerWidth || 0;
+  const screenWidth = window.screen?.availWidth || window.screen?.width || 0;
+  const screenHeight = window.screen?.availHeight || window.screen?.height || 0;
+  const measuredWidths = [visualViewportWidth, innerWidth, screenWidth, screenHeight].filter((width) => width > 0);
+
+  return measuredWidths.length ? Math.min(...measuredWidths) : 390;
+}
 const HINT_TOOLTIP_VERTICAL_PADDING_PX = 12;
 const HINT_TOOLTIP_HORIZONTAL_PADDING_PX = 16;
 const HINT_TOOLTIP_HORIZONTAL_CHROME_PX = 36;
@@ -1353,19 +1408,33 @@ function MiniClueBoxExample({ theme, fontFamily, fixedFontSize, highlightStyles 
     );
 
   return (
-    <div className="relative w-full max-w-[340px] pb-[86px]">
+    <div className="relative w-full max-w-[340px] pb-[150px]">
       <style>{highlightStyles}</style>
+      <style>{`
+        .how-to-mini-clue .player-highlight-definition,
+        .how-to-mini-clue .player-highlight-wordplay,
+        .how-to-mini-clue .player-highlight-fodder {
+          line-height: inherit !important;
+          padding-top: 0.01em !important;
+          padding-bottom: 0.01em !important;
+        }
+
+        .how-to-mini-clue .player-highlight-definition {
+          text-underline-offset: 0.18em !important;
+        }
+      `}</style>
       <div
         className="flex min-h-[104px] w-full items-center justify-center rounded-[24px] px-6 py-4 text-center"
         style={{ background: theme.clueActiveBg, color: theme.text }}
       >
         <div
-          className="player-clue-rich player-clue-rich-active font-semibold uppercase tracking-[-0.02em]"
+          className="how-to-mini-clue player-clue-rich player-clue-rich-active font-semibold uppercase"
           style={{
             fontFamily,
             fontSize: `${miniClueFontSize}px`,
             fontWeight: 600,
-            lineHeight: 1.16,
+            lineHeight: 1.52,
+            letterSpacing: 0,
           }}
         >
           <span
@@ -2266,6 +2335,11 @@ export default function TriangleWordGamePrototypeFixed() {
   const [playerClueStackScale, setPlayerClueStackScale] = useState(1);
   const [playerStackedBoardShellHeight, setPlayerStackedBoardShellHeight] = useState(260);
   const [isPlayerStackedLayout, setIsPlayerStackedLayout] = useState(false);
+  const [isPlayerMobileDevice, setIsPlayerMobileDevice] = useState(() => isExplicitMobileDevice());
+  const [isPlayerMobileLayout, setIsPlayerMobileLayout] = useState(() => isExplicitMobileDevice());
+  const [mobilePageHeight, setMobilePageHeight] = useState(() => getDeviceSpecificPageHeight());
+  const [mobilePageWidth, setMobilePageWidth] = useState(() => getDeviceSpecificPageWidth());
+  const [deviceMaxPageHeight, setDeviceMaxPageHeight] = useState(() => getDeviceMaxPageHeight());
   const playerStackedLayoutRef = useRef(false);
   const [hidePlayerModeToggle, setHidePlayerModeToggle] = useState(false);
   const [playerHorizontalTracks, setPlayerHorizontalTracks] = useState({
@@ -2296,6 +2370,86 @@ export default function TriangleWordGamePrototypeFixed() {
   const wasPausedBeforeHowToPlayRef = useRef(false);
 
   const playerClues = useMemo(() => clues.map((clue) => clue.plainText), [clues]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const updateDeviceMetrics = () => {
+      setIsPlayerMobileDevice(isExplicitMobileDevice());
+      setMobilePageHeight(getDeviceSpecificPageHeight());
+      setMobilePageWidth(getDeviceSpecificPageWidth());
+      setDeviceMaxPageHeight(getDeviceMaxPageHeight());
+    };
+
+    updateDeviceMetrics();
+    window.addEventListener("resize", updateDeviceMetrics);
+    window.visualViewport?.addEventListener("resize", updateDeviceMetrics);
+
+    return () => {
+      window.removeEventListener("resize", updateDeviceMetrics);
+      window.visualViewport?.removeEventListener("resize", updateDeviceMetrics);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      typeof document === "undefined" ||
+      mode !== "player" ||
+      !isPlayerMobileLayout ||
+      showHowToPlay
+    ) {
+      return undefined;
+    }
+
+    const root = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY || 0;
+    const previousRootStyle = {
+      height: root.style.height,
+      overflow: root.style.overflow,
+      overscrollBehavior: root.style.overscrollBehavior,
+      width: root.style.width,
+    };
+    const previousBodyStyle = {
+      height: body.style.height,
+      left: body.style.left,
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      width: body.style.width,
+      overscrollBehavior: body.style.overscrollBehavior,
+    };
+
+    window.scrollTo(0, 0);
+    root.style.height = `${mobilePageHeight}px`;
+    root.style.width = `${mobilePageWidth}px`;
+    root.style.overflow = "hidden";
+    root.style.overscrollBehavior = "none";
+    body.style.height = `${mobilePageHeight}px`;
+    body.style.width = `${mobilePageWidth}px`;
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = "0";
+    body.style.left = "0";
+    body.style.overscrollBehavior = "none";
+
+    return () => {
+      root.style.height = previousRootStyle.height;
+      root.style.overflow = previousRootStyle.overflow;
+      root.style.overscrollBehavior = previousRootStyle.overscrollBehavior;
+      root.style.width = previousRootStyle.width;
+      body.style.height = previousBodyStyle.height;
+      body.style.left = previousBodyStyle.left;
+      body.style.overflow = previousBodyStyle.overflow;
+      body.style.position = previousBodyStyle.position;
+      body.style.top = previousBodyStyle.top;
+      body.style.width = previousBodyStyle.width;
+      body.style.overscrollBehavior = previousBodyStyle.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isPlayerMobileLayout, mobilePageHeight, mobilePageWidth, mode, showHowToPlay]);
+
   const sharedPlayerClueFontSize = useMemo(
     () =>
       Math.min(
@@ -3125,13 +3279,14 @@ export default function TriangleWordGamePrototypeFixed() {
     if (!pane || !shell) return undefined;
 
     const updateScale = () => {
-      const shellWidth = shell.clientWidth || 0;
-      const shellHeight = shell.clientHeight || 0;
+      const mobileLayout = isPlayerMobileDevice;
+      const shellWidth = mobileLayout ? mobilePageWidth : shell.clientWidth || 0;
+      const shellHeight = mobileLayout ? mobilePageHeight : shell.clientHeight || 0;
 
       if (mode === "player") {
         const shellRect = shellRef.current?.getBoundingClientRect();
-        const pageLeft = shellRect?.left ?? 0;
-        const pageRight = shellRect?.right ?? window.innerWidth;
+        const pageLeft = mobileLayout ? 0 : shellRect?.left ?? 0;
+        const pageRight = mobileLayout ? mobilePageWidth : shellRect?.right ?? window.innerWidth;
         const pageWidth = Math.max(pageRight - pageLeft, 1);
         const clueHeight = CLUE_BOX_HEIGHT * clues.length;
         const measuredClueHeight = clueStackRef.current?.clientHeight || clueHeight;
@@ -3197,9 +3352,10 @@ export default function TriangleWordGamePrototypeFixed() {
         );
         const horizontalLayoutScale =
           1 - (1 - PLAYER_INTERMEDIATE_SCALE) * intermediateProgress;
-        const stackedLayout = pageWidth <= PLAYER_STACKED_LAYOUT_WIDTH;
+        const stackedLayout = mobileLayout || pageWidth <= PLAYER_STACKED_LAYOUT_WIDTH;
         playerStackedLayoutRef.current = stackedLayout;
         setIsPlayerStackedLayout(stackedLayout);
+        setIsPlayerMobileLayout(mobileLayout);
         setHidePlayerModeToggle(stackedLayout || horizontalLayoutScale < 0.999);
         const horizontalRenderedBoardScale = horizontalBoardScale * horizontalLayoutScale;
         const horizontalStartOffset = PLAYER_HORIZONTAL_START_OFFSET * horizontalLayoutScale;
@@ -3244,13 +3400,37 @@ export default function TriangleWordGamePrototypeFixed() {
         const stackedTriangleScale =
           Math.min(PLAYER_STACKED_TRIANGLE_SCALE, horizontalRenderedBoardScale) *
           PLAYER_STACKED_TRIANGLE_SCALE_BOOST;
+        let mobileBoardScale = null;
+        let mobileBoardWhitespace = null;
 
-        if (stackedLayout) {
+        if (stackedLayout && mobileLayout) {
+          const mobileLayoutHeight = mobilePageHeight || window.visualViewport?.height || window.innerHeight || shellHeight;
+          const availableWidth = Math.max(Math.min(shellWidth, pageWidth) - PLAYER_MOBILE_BOARD_PADDING * 2, 1);
+          mobileBoardWhitespace = Math.max(
+            mobileLayoutHeight -
+              62 -
+              PLAYER_MOBILE_CLUE_HEIGHT -
+              PLAYER_MOBILE_KEYBOARD_HEIGHT -
+              PLAYER_MOBILE_BOARD_PADDING,
+            1
+          );
+          const targetMobileGraphicHeight = mobileBoardWhitespace * PLAYER_TRIANGLE_CLUE_RATIO;
+          mobileBoardScale = Math.min(
+            availableWidth / Math.max(graphicWidth, 1),
+            targetMobileGraphicHeight / Math.max(graphicHeight, 1)
+          );
+          narrowScale = 1;
+          const verticalBoardScale = mobileBoardScale;
+          const visualGraphicCenterX = (BOARD_OFFSET_X + triangleGraphicBounds.centerX) * verticalBoardScale;
+          setBoardScale(mobileBoardScale > 0 ? mobileBoardScale : 1);
+          setPlayerNarrowScale(1);
+          setPlayerClueStackScale(1);
+          setBoardOffsetX(shellWidth / 2 - visualGraphicCenterX);
+        } else if (stackedLayout) {
           const availableWidth = Math.max(Math.min(shellWidth, clueContentWidth || shellWidth) - 40, 1);
+          const availableDeviceHeight = Math.max(deviceMaxPageHeight || shellHeight, shellHeight, 1);
           const availableHeight = Math.max(
-            (window.visualViewport?.height || window.innerHeight || shellHeight) -
-              62 * playerBannerScale -
-              52,
+            availableDeviceHeight - 62 * playerBannerScale - 52,
             1
           );
           const unscaledVerticalHeight =
@@ -3284,17 +3464,20 @@ export default function TriangleWordGamePrototypeFixed() {
           clueCenterY = (clueRect.top + clueRect.bottom) / 2 - shellRect.top;
         }
 
-        if (stackedLayout) {
+        if (stackedLayout && mobileLayout) {
+          const verticalBoardScale = mobileBoardScale && mobileBoardScale > 0 ? mobileBoardScale : 1;
+          const visualGraphicHeight = graphicHeight * verticalBoardScale;
+          const graphicTopUnits = BOARD_OFFSET_Y + triangleGraphicBounds.top;
+          const boardWhitespace = Math.max(mobileBoardWhitespace || visualGraphicHeight, visualGraphicHeight);
+          setBoardOffsetY((boardWhitespace - visualGraphicHeight) / 2 - graphicTopUnits * verticalBoardScale);
+          setPlayerStackedBoardShellHeight(boardWhitespace);
+        } else if (stackedLayout) {
           const verticalBoardScale = stackedTriangleScale * narrowScale;
           const stackedClueScale = narrowScale * PLAYER_STACKED_CLUE_SCALE;
           const visualGraphicHeight = graphicHeight * verticalBoardScale;
           const visualClueHeight = measuredClueHeight * stackedClueScale;
-          const availableHeight = Math.max(
-            (window.visualViewport?.height || window.innerHeight || shellHeight) -
-              62 * playerBannerScale -
-              52,
-            1
-          );
+          const availableDeviceHeight = Math.max(deviceMaxPageHeight || shellHeight, shellHeight, 1);
+          const availableHeight = Math.max(availableDeviceHeight - 62 * playerBannerScale - 52, 1);
           const visualCompositionHeight = visualGraphicHeight + stackedHintTooltipGap + visualClueHeight;
           const stackedEdgeSpace = Math.max(
             PLAYER_STACKED_BOTTOM_PADDING,
@@ -3317,7 +3500,11 @@ export default function TriangleWordGamePrototypeFixed() {
           const contentWidth = Math.max(paneRect.width - panePaddingLeft - panePaddingRight, 0);
           const availableStackWidth = Math.min(contentWidth || PLAYER_CLUE_STACK_MAX_WIDTH, PLAYER_CLUE_STACK_MAX_WIDTH);
           const renderedStackWidth = clueStackRef.current?.offsetWidth || availableStackWidth;
-          const activeLayoutScale = stackedLayout ? narrowScale * PLAYER_STACKED_CLUE_SCALE : horizontalLayoutScale;
+          const activeLayoutScale = stackedLayout
+            ? mobileLayout
+              ? 1
+              : narrowScale * PLAYER_STACKED_CLUE_SCALE
+            : horizontalLayoutScale;
           const visualStackWidth = (stackedLayout ? PLAYER_CLUE_STACK_MAX_WIDTH : renderedStackWidth) * activeLayoutScale;
           const targetLeft = stackedLayout
             ? contentWidth / 2 - visualStackWidth / 2
@@ -3367,6 +3554,7 @@ export default function TriangleWordGamePrototypeFixed() {
       setPlayerStackedBoardShellHeight(260);
       playerStackedLayoutRef.current = false;
       setIsPlayerStackedLayout(false);
+      setIsPlayerMobileLayout(false);
       setHidePlayerModeToggle(false);
       setPlayerTimerCenterX(null);
       setPlayerHeaderActionsCenterX(null);
@@ -3403,6 +3591,10 @@ export default function TriangleWordGamePrototypeFixed() {
     stackedHintTooltipGap,
     triangleGraphicBounds,
     showHowToPlay,
+    isPlayerMobileDevice,
+    deviceMaxPageHeight,
+    mobilePageHeight,
+    mobilePageWidth,
   ]);
 
   useEffect(() => {
@@ -3462,6 +3654,7 @@ export default function TriangleWordGamePrototypeFixed() {
     const role = boardData.squareRoleById?.[selectedSquare.id] || null;
     return role?.kind === "side" ? role.side : lastSide;
   }, [selectedSquare, boardData, lastSide]);
+  const activePlayerClueIndex = Math.max(CLUE_SIDE_KEYS.indexOf(activeSide), 0);
   useEffect(() => {
     if (selectedId && !squares.some((sq) => sq.id === selectedId)) {
       setSelectedId(getPreferredSelectedSquareId(squares));
@@ -3918,6 +4111,16 @@ export default function TriangleWordGamePrototypeFixed() {
     return boardData.cornerIdByRole?.[endpoints?.startCorner] || null;
   };
 
+  const getPlayerSideStartId = (side) => {
+    return (
+      getLeadingCornerIdForSide(side) ||
+      boardData.sideRules?.[side]?.ordered?.[0]?.id ||
+      boardData.sides?.[side]?.[0]?.id ||
+      selectedId ||
+      getPreferredSelectedSquareId(squares)
+    );
+  };
+
   const handlePlayerSquareActivate = (squareId) => {
     if (isPlayerInputLocked) return;
     setSelectedId(squareId);
@@ -3938,15 +4141,40 @@ export default function TriangleWordGamePrototypeFixed() {
     const side = CLUE_SIDE_KEYS[index];
     if (!side) return;
 
-    const targetId = getLeadingCornerIdForSide(side);
+    const targetId = getPlayerSideStartId(side);
     if (!targetId) return;
 
     setLastSide(side);
-    handlePlayerSquareActivate(targetId);
+    setSelectedId(targetId);
+    setTypingFlow(false);
 
-    window.requestAnimationFrame(() => {
-      inputRefs.current[targetId]?.focus();
-    });
+    if (!isPlayerMobileLayout) {
+      window.requestAnimationFrame(() => {
+        inputRefs.current[targetId]?.focus();
+      });
+    }
+  };
+
+  const activateMobileArrowClue = (direction) => {
+    const sequence = direction === "left" ? MOBILE_LEFT_ARROW_SIDE_KEYS : MOBILE_RIGHT_ARROW_SIDE_KEYS;
+    const activeIndex = Math.max(sequence.indexOf(activeSide), 0);
+    const nextSide = sequence[(activeIndex + 1) % sequence.length];
+    const nextIndex = CLUE_SIDE_KEYS.indexOf(nextSide);
+    if (nextIndex !== -1) handlePlayerClueActivate(nextIndex);
+  };
+
+  const handleMobileKeyboardLetter = (letter) => {
+    if (!isPlayerMobileLayout || mode !== "player" || isPlayerInputLocked || finishedState) return;
+    if (selectedId) {
+      handleSquareKeyAction(letter, selectedId);
+    }
+  };
+
+  const handleMobileKeyboardDelete = () => {
+    if (!isPlayerMobileLayout || mode !== "player" || isPlayerInputLocked || finishedState) return;
+    if (selectedId) {
+      handleSquareKeyAction("Backspace", selectedId);
+    }
   };
 
   const handlePlayerClueMouseDown = (event, index) => {
@@ -4954,69 +5182,122 @@ export default function TriangleWordGamePrototypeFixed() {
     setHoveredHintTooltipPreservingSelection(null);
   };
 
+  const buildHintTooltipState = (event, tooltipKey, hintText, { coverMobileClueStack = false } = {}) => {
+    const origin = { x: event.clientX, y: event.clientY };
+    const boardRect = boardRef.current?.getBoundingClientRect();
+    const latestOrigin = hintHoverOriginRef.current || origin;
+    const bottomLeft = squares.find((sq) => sq.type === "bottomLeftCorner");
+    const bottomRight = squares.find((sq) => sq.type === "bottomRightCorner");
+
+    const baseLeftUnits = BOARD_OFFSET_X + (bottomLeft?.x ?? triangleGraphicBounds.left);
+    const baseRightUnits =
+      BOARD_OFFSET_X + ((bottomRight?.x ?? triangleGraphicBounds.right - CELL_SIZE) + CELL_SIZE);
+    const baseBottomUnits = BOARD_OFFSET_Y + ((bottomLeft?.y ?? triangleGraphicBounds.bottom - CELL_SIZE) + CELL_SIZE);
+    const isStackedLayout = playerStackedLayoutRef.current;
+    const clueStackRect = clueStackRef.current?.getBoundingClientRect();
+    const baseWidth = Math.max((baseRightUnits - baseLeftUnits) * renderedBoardScale, 180);
+    const maxTooltipWidth =
+      clueStackRect
+        ? Math.max(clueStackRect.width, 180)
+        : baseWidth;
+    const hintSegments = getHintTooltipSegments(hintText);
+
+    if (coverMobileClueStack && clueStackRect) {
+      const tooltipWidth = Math.max(clueStackRect.width, 180);
+      const clueTop = window.scrollY + clueStackRect.top;
+      const bannerBottom = window.scrollY + playerBannerHeightPx;
+      const availableTooltipHeight = Math.max(clueTop - bannerBottom, 48);
+      const naturalTooltipHeight = getHintTooltipRenderedHeight(hintSegments, tooltipWidth, 1);
+      const tooltipHeight = Math.min(naturalTooltipHeight, availableTooltipHeight);
+      const tooltipFontScale =
+        naturalTooltipHeight <= availableTooltipHeight
+          ? 1
+          : getHintTooltipFontScaleForSlot(hintSegments, tooltipWidth, availableTooltipHeight);
+
+      return {
+        key: tooltipKey,
+        hintText,
+        hintSegments,
+        centerX: window.scrollX + clueStackRect.left + clueStackRect.width / 2,
+        top: clueTop - tooltipHeight,
+        width: tooltipWidth,
+        maxWidth: tooltipWidth,
+        height: tooltipHeight,
+        fontScale: tooltipFontScale,
+        interactive: true,
+      };
+    }
+
+    const tooltipWidth = getHintTooltipOuterWidth(hintSegments, maxTooltipWidth);
+    const centerX = boardRect
+      ? isStackedLayout && clueStackRect
+        ? window.scrollX + clueStackRect.left + clueStackRect.width / 2
+        : window.scrollX + boardRect.left + baseLeftUnits * renderedBoardScale + baseWidth / 2
+      : window.scrollX + latestOrigin.x;
+    const triangleBaseBottom = boardRect
+      ? window.scrollY + boardRect.top + baseBottomUnits * renderedBoardScale
+      : window.scrollY + latestOrigin.y;
+    if (isStackedLayout && clueStackRect) {
+      const clueTop = window.scrollY + clueStackRect.top;
+      const tooltipTop = triangleBaseBottom + PLAYER_STACKED_HINT_TOOLTIP_GAP;
+      const maxTooltipHeight = Math.max(clueTop - tooltipTop, 48);
+      const naturalTooltipHeight = getHintTooltipRenderedHeight(hintSegments, tooltipWidth, 1);
+      const needsConstrainedHeight = naturalTooltipHeight > maxTooltipHeight;
+      const tooltipFontScale =
+        needsConstrainedHeight
+          ? getHintTooltipFontScaleForSlot(hintSegments, tooltipWidth, maxTooltipHeight)
+          : 1;
+      const scaledTooltipHeight = getHintTooltipRenderedHeight(hintSegments, tooltipWidth, tooltipFontScale);
+      const tooltipHeight = needsConstrainedHeight
+        ? Math.min(Math.ceil(scaledTooltipHeight), maxTooltipHeight)
+        : null;
+
+      return {
+        key: tooltipKey,
+        hintText,
+        hintSegments,
+        centerX,
+        top: tooltipTop,
+        width: tooltipWidth,
+        maxWidth: maxTooltipWidth,
+        height: tooltipHeight,
+        fontScale: tooltipFontScale,
+      };
+    }
+
+    const top = boardRect
+      ? clueStackRect
+          ? window.scrollY + clueStackRect.bottom
+          : triangleBaseBottom + 8
+      : window.scrollY + latestOrigin.y + 8;
+
+    return {
+      key: tooltipKey,
+      hintText,
+      hintSegments,
+      centerX,
+      top,
+      width: tooltipWidth,
+      maxWidth: maxTooltipWidth,
+      fontScale: 1,
+    };
+  };
+
+  const showHintTooltip = (event, tooltipKey, hintText, options) => {
+    setHoveredHintTooltipPreservingSelection(buildHintTooltipState(event, tooltipKey, hintText, options));
+  };
+
   const scheduleHintTooltip = (event, tooltipKey, hintText) => {
     clearPendingHintTooltip();
     setHoveredHintTooltipPreservingSelection((prev) => (prev?.key === tooltipKey ? prev : null));
 
     const origin = { x: event.clientX, y: event.clientY };
-    const boardRect = boardRef.current?.getBoundingClientRect();
     hintHoverOriginRef.current = origin;
 
     hintTooltipTimeoutRef.current = window.setTimeout(() => {
       const latestOrigin = hintHoverOriginRef.current;
       if (!latestOrigin) return;
-
-      const bottomLeft = squares.find((sq) => sq.type === "bottomLeftCorner");
-      const bottomRight = squares.find((sq) => sq.type === "bottomRightCorner");
-
-      const baseLeftUnits = BOARD_OFFSET_X + (bottomLeft?.x ?? triangleGraphicBounds.left);
-      const baseRightUnits =
-        BOARD_OFFSET_X + ((bottomRight?.x ?? triangleGraphicBounds.right - CELL_SIZE) + CELL_SIZE);
-      const baseBottomUnits = BOARD_OFFSET_Y + ((bottomLeft?.y ?? triangleGraphicBounds.bottom - CELL_SIZE) + CELL_SIZE);
-      const isStackedLayout = playerStackedLayoutRef.current;
-      const clueStackRect = clueStackRef.current?.getBoundingClientRect();
-      const baseWidth = Math.max((baseRightUnits - baseLeftUnits) * renderedBoardScale, 180);
-      const maxTooltipWidth =
-        isStackedLayout && clueStackRect
-          ? Math.max(clueStackRect.width, 180)
-          : baseWidth;
-      const hintSegments = getHintTooltipSegments(hintText);
-      const tooltipWidth = getHintTooltipOuterWidth(hintSegments, maxTooltipWidth);
-      const centerX = boardRect
-        ? isStackedLayout && clueStackRect
-          ? window.scrollX + clueStackRect.left + clueStackRect.width / 2
-          : window.scrollX + boardRect.left + baseLeftUnits * renderedBoardScale + baseWidth / 2
-        : window.scrollX + latestOrigin.x;
-      const triangleBaseBottom = boardRect
-        ? window.scrollY + boardRect.top + baseBottomUnits * renderedBoardScale
-        : window.scrollY + latestOrigin.y;
-      const availableStackedGap =
-        isStackedLayout && clueStackRect
-          ? window.scrollY + clueStackRect.top - triangleBaseBottom
-          : 0;
-      const availableTooltipHeight = availableStackedGap - PLAYER_STACKED_HINT_TOOLTIP_GAP * 2;
-      const tooltipFontScale =
-        isStackedLayout && availableStackedGap > 0
-          ? getHintTooltipFontScaleForSlot(hintSegments, tooltipWidth, availableTooltipHeight)
-          : 1;
-      const top = boardRect
-        ? isStackedLayout && clueStackRect
-          ? triangleBaseBottom + PLAYER_STACKED_HINT_TOOLTIP_GAP
-          : clueStackRect
-            ? window.scrollY + clueStackRect.bottom
-            : triangleBaseBottom + 8
-        : window.scrollY + latestOrigin.y + 8;
-
-      setHoveredHintTooltipPreservingSelection({
-        key: tooltipKey,
-        hintText,
-        hintSegments,
-        centerX,
-        top,
-        width: tooltipWidth,
-        maxWidth: maxTooltipWidth,
-        fontScale: tooltipFontScale,
-      });
+      showHintTooltip(event, tooltipKey, hintText);
       hintTooltipTimeoutRef.current = null;
     }, HINT_TOOLTIP_HOVER_DELAY_MS);
   };
@@ -5067,6 +5348,29 @@ export default function TriangleWordGamePrototypeFixed() {
     }
 
     handleHintTooltipPointerMove(event, tooltipKey);
+  };
+
+  const handleClueHintTap = (event, clueIndex) => {
+    const highlight = event.target.closest?.("[data-player-highlight-type]");
+    if (!highlight || !event.currentTarget.contains(highlight)) return false;
+
+    const type = highlight.getAttribute("data-player-highlight-type");
+    const hintText = type ? clues[clueIndex]?.hints?.[type]?.trim() : "";
+    if (!type || !hintText) return false;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const tooltipKey = `${clueIndex}-${type}`;
+    clearPendingHintTooltip();
+    if (hoveredHintTooltip?.key === tooltipKey) {
+      setHoveredHintTooltipPreservingSelection(null);
+      return true;
+    }
+
+    hintHoverOriginRef.current = { x: event.clientX, y: event.clientY };
+    showHintTooltip(event, tooltipKey, hintText, { coverMobileClueStack: isPlayerMobileLayout });
+    return true;
   };
 
   const closeHintUi = () => {
@@ -5171,13 +5475,48 @@ export default function TriangleWordGamePrototypeFixed() {
     }
   };
 
+  const mobileKeyboardButtonProps = {};
+
+  const getPlayerBannerMenuStyle = (align, width = 220) =>
+    isPlayerMobileLayout
+      ? {
+          position: "fixed",
+          top: `${isPlayerMobileLayout ? 62 : 62 * playerBannerScale}px`,
+          left: align === "left" ? "8px" : undefined,
+          right: align === "right" ? "8px" : undefined,
+          width: `min(${width}px, calc(100vw - 16px))`,
+          maxHeight: `calc(100dvh - ${(isPlayerMobileLayout ? 62 : 62 * playerBannerScale) + 8}px)`,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+      }
+      : {};
+  const mobileBannerTextButtonStyle = isPlayerMobileLayout
+    ? {
+        padding: "6px 7px",
+        fontSize: "13px",
+        lineHeight: 1,
+      }
+    : {};
+  const mobileBannerControlOffsetStyle = isPlayerMobileLayout ? { transform: "translateY(11px)" } : {};
+  const playerBannerHeightPx = 62 * (isPlayerMobileLayout ? 1 : playerBannerScale);
+  const shouldLockPlayerViewport = mode === "player" && !showHowToPlay;
+  const lockedPlayerViewportHeight = isPlayerMobileLayout ? `${mobilePageHeight}px` : "100dvh";
+  const lockedPlayerContentHeight = isPlayerMobileLayout
+    ? Math.max(mobilePageHeight - playerBannerHeightPx, 1)
+    : `calc(100dvh - ${playerBannerHeightPx}px)`;
+
   return (
     <div
-      className="min-h-screen"
+      className={isPlayerMobileLayout ? "" : "min-h-screen"}
       style={{
         fontFamily: PLAYER_UI_FONT,
         background: theme.appBg,
         color: theme.text,
+        height: shouldLockPlayerViewport ? lockedPlayerViewportHeight : undefined,
+        maxHeight: shouldLockPlayerViewport ? lockedPlayerViewportHeight : undefined,
+        width: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+        maxWidth: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+        overflow: shouldLockPlayerViewport ? "hidden" : undefined,
         visibility:
           mode === "player" && (!sessionHydrated || (!showHowToPlay && !isPlayerLayoutReady))
             ? "hidden"
@@ -5186,15 +5525,39 @@ export default function TriangleWordGamePrototypeFixed() {
     >
       <div
         ref={shellRef}
-        className="mx-auto w-full max-w-[1540px] min-h-screen border"
-        style={{ background: theme.shellBg, borderColor: theme.shellBorder }}
+        className={`mx-auto w-full max-w-[1540px] border ${isPlayerMobileLayout ? "" : "min-h-screen"}`}
+        style={{
+          background: theme.shellBg,
+          borderColor: theme.shellBorder,
+          boxSizing: "border-box",
+          height: shouldLockPlayerViewport ? lockedPlayerViewportHeight : undefined,
+          maxHeight: shouldLockPlayerViewport ? lockedPlayerViewportHeight : undefined,
+          width: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+          maxWidth: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+          overflow: shouldLockPlayerViewport ? "hidden" : undefined,
+        }}
       >
-        <div style={mode === "player" ? { minHeight: "100vh" } : undefined}>
+        <div
+          style={
+            mode === "player"
+              ? shouldLockPlayerViewport
+                ? {
+                    height: lockedPlayerViewportHeight,
+                    maxHeight: lockedPlayerViewportHeight,
+                    width: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+                    maxWidth: isPlayerMobileLayout ? `${mobilePageWidth}px` : undefined,
+                    overflow: "hidden",
+                  }
+                : { minHeight: "100vh" }
+              : undefined
+          }
+        >
           <div
-            className="relative z-30 border-b px-7 py-1 text-[22px]"
+            className={`relative z-30 border-b text-[22px] ${mode === "player" && isPlayerMobileLayout ? "px-0 py-0" : "px-7 py-1"}`}
             style={{
-              height: `${62 * playerBannerScale}px`,
-              minHeight: `${62 * playerBannerScale}px`,
+              height: `${playerBannerHeightPx}px`,
+              minHeight: `${playerBannerHeightPx}px`,
+              boxSizing: "border-box",
               background: theme.topBarBg,
               borderColor: theme.topBarBorder,
               color: theme.text,
@@ -5203,17 +5566,31 @@ export default function TriangleWordGamePrototypeFixed() {
             {mode === "player" ? (
               <div
                 style={{
-                  width: `${100 / Math.max(playerBannerScale, 0.001)}%`,
-                  transform: `scale(${playerBannerScale})`,
+                  position: isPlayerMobileLayout ? "absolute" : undefined,
+                  inset: isPlayerMobileLayout ? "0 12px" : undefined,
+                  width: isPlayerMobileLayout ? "auto" : `${100 / Math.max(playerBannerScale, 0.001)}%`,
+                  height: isPlayerMobileLayout ? "100%" : "100%",
+                  transform: isPlayerMobileLayout ? "none" : `scale(${playerBannerScale})`,
                   transformOrigin: "top left",
                 }}
               >
                 <div
-                  className={`relative z-30 h-[48px] items-center ${isPlayerStackedLayout ? "grid" : "flex justify-between"}`}
+                  className={`relative z-30 h-full items-center ${isPlayerStackedLayout ? "grid" : "flex justify-between"}`}
                   style={
-                    isPlayerStackedLayout
+                    isPlayerMobileLayout
                       ? {
-                          gridTemplateColumns: "auto minmax(0, 1fr) auto",
+                          display: "grid",
+                          gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
+                          justifyItems: "center",
+                          alignItems: "center",
+                          gap: "0",
+                          width: "100%",
+                        }
+                      : isPlayerStackedLayout
+                      ? {
+                          gridTemplateColumns: isPlayerMobileLayout
+                            ? "auto minmax(0, 1fr) auto"
+                            : "auto minmax(0, 1fr) auto",
                           columnGap: "clamp(6px, 2vw, 18px)",
                         }
                       : undefined
@@ -5221,11 +5598,18 @@ export default function TriangleWordGamePrototypeFixed() {
                 >
                   <div
                     className="relative z-40 flex items-center gap-5 settings-container"
-                    style={isPlayerStackedLayout ? { gridColumn: "1", justifySelf: "start" } : undefined}
+                    style={
+                      isPlayerMobileLayout
+                        ? { display: "contents" }
+                        : isPlayerStackedLayout
+                          ? { gridColumn: "1", justifySelf: "start" }
+                          : undefined
+                    }
                   >
                     <button
                       className="flex items-center justify-center w-7 h-7 rounded-lg"
                       type="button"
+                      {...mobileKeyboardButtonProps}
                       onClick={() => {
                         setShowSettingsMenu((prev) => {
                           const next = !prev;
@@ -5238,7 +5622,10 @@ export default function TriangleWordGamePrototypeFixed() {
                         setOpenHintSection(null);
                         setHoveredHintTooltip(null);
                       }}
-                      style={{ background: activeButton === "settings" ? theme.controlActiveBg : "transparent" }}
+                      style={{
+                        background: activeButton === "settings" ? theme.controlActiveBg : "transparent",
+                        ...mobileBannerControlOffsetStyle,
+                      }}
                       aria-label="Settings"
                     >
                       <Settings size={21} strokeWidth={1.5} />
@@ -5246,10 +5633,11 @@ export default function TriangleWordGamePrototypeFixed() {
                     {showSettingsMenu && (
                       <div
                         className="absolute left-0 top-[calc(100%+10px)] z-40 w-[220px] overflow-visible rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-                        style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
+                        style={{ background: theme.menuBg, borderColor: theme.menuBorder, ...getPlayerBannerMenuStyle("left") }}
                       >
                         <button
                           type="button"
+                          {...mobileKeyboardButtonProps}
                           onClick={() => setIsDarkMode((prev) => !prev)}
                           className="flex w-full items-center justify-between rounded-t-[18px] px-4 py-3 text-left text-[16px]"
                           style={{ color: theme.text }}
@@ -5276,6 +5664,7 @@ export default function TriangleWordGamePrototypeFixed() {
                         <div className="mx-4 h-px" style={{ background: theme.menuBorder }} />
                         <button
                           type="button"
+                          {...mobileKeyboardButtonProps}
                           onClick={() => {
                             setShowSettingsPresetMenu(false);
                             setShowSettingsMenu(false);
@@ -5298,6 +5687,7 @@ export default function TriangleWordGamePrototypeFixed() {
                           <div className="relative">
                             <button
                               type="button"
+                              {...mobileKeyboardButtonProps}
                               onClick={() => setShowSettingsPresetMenu((prev) => !prev)}
                               className="flex w-full items-center justify-between rounded-b-[18px] px-4 py-3 text-left text-[16px] transition-colors"
                               style={{
@@ -5320,12 +5710,24 @@ export default function TriangleWordGamePrototypeFixed() {
                             {showSettingsPresetMenu && (
                               <div
                                 className="absolute left-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-                                style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
+                                style={{
+                                  background: theme.menuBg,
+                                  borderColor: theme.menuBorder,
+                                  ...(isPlayerMobileLayout
+                                    ? {
+                                        position: "static",
+                                        width: "100%",
+                                        maxHeight: "40dvh",
+                                        overflowY: "auto",
+                                      }
+                                    : {}),
+                                }}
                               >
                                 {availablePresetSlots.map((slot) => (
                                   <button
                                     key={slot.id}
                                     type="button"
+                                    {...mobileKeyboardButtonProps}
                                     onClick={() => handlePresetLoad(slot)}
                                     className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] transition-colors"
                                     style={{ color: theme.text, background: "transparent" }}
@@ -5349,16 +5751,24 @@ export default function TriangleWordGamePrototypeFixed() {
 
                   <div
                     className={isPlayerStackedLayout ? "flex min-w-0 justify-end" : "contents"}
-                    style={isPlayerStackedLayout ? { gridColumn: "2" } : undefined}
+                    style={
+                      isPlayerMobileLayout
+                        ? { display: "contents" }
+                        : isPlayerStackedLayout
+                          ? { gridColumn: "2", justifySelf: "center" }
+                          : undefined
+                    }
                   >
                     <div
-                      className={isPlayerStackedLayout ? "relative w-full max-w-[920px]" : "contents"}
+                      className={isPlayerMobileLayout ? "contents" : isPlayerStackedLayout ? "relative w-full max-w-[920px]" : "contents"}
                     >
                       <div
                         ref={clockGroupRef}
                         className={`${isPlayerStackedLayout ? "relative justify-center" : ""} flex items-center gap-3 font-medium`}
                         style={
-                          !isPlayerStackedLayout && playerTimerCenterX !== null
+                          isPlayerMobileLayout
+                            ? { display: "contents" }
+                            : !isPlayerStackedLayout && playerTimerCenterX !== null
                             ? {
                                 position: "absolute",
                                 left: `${playerTimerCenterX}px`,
@@ -5368,8 +5778,11 @@ export default function TriangleWordGamePrototypeFixed() {
                             : undefined
                         }
                       >
-                        <span className="text-[16px]">{formatTime(seconds)}</span>
+                        <span className="text-[16px]" style={mobileBannerControlOffsetStyle}>
+                          {formatTime(seconds)}
+                        </span>
                         <button
+                          {...mobileKeyboardButtonProps}
                           onClick={() => {
                             if (showHowToPlay) return;
                             if (finishedState) return;
@@ -5380,7 +5793,10 @@ export default function TriangleWordGamePrototypeFixed() {
                             setIsPaused((p) => !p);
                           }}
                           className="text-[16px] font-medium tracking-tight"
-                          style={{ color: finishedState || showHowToPlay ? theme.disabledText : theme.mutedText }}
+                          style={{
+                            color: finishedState || showHowToPlay ? theme.disabledText : theme.mutedText,
+                            ...mobileBannerControlOffsetStyle,
+                          }}
                           disabled={Boolean(finishedState) || showHowToPlay}
                           type="button"
                         >
@@ -5394,7 +5810,12 @@ export default function TriangleWordGamePrototypeFixed() {
                     ref={playerHeaderActionsRef}
                     className={`relative z-30 items-center text-[16px] font-medium ${isPlayerStackedLayout ? "grid" : "flex gap-8"}`}
                     style={
-                      isPlayerStackedLayout
+                      isPlayerMobileLayout
+                        ? {
+                            display: "contents",
+                            fontSize: "14px",
+                          }
+                        : isPlayerStackedLayout
                         ? {
                             gap: "clamp(2px, 1.4vw, 12px)",
                             gridColumn: "3",
@@ -5416,9 +5837,10 @@ export default function TriangleWordGamePrototypeFixed() {
                       className="flex items-center justify-end gap-[clamp(4px,2vw,32px)]"
                       style={{ display: "contents" }}
                     >
-                    <div className="relative hint-container">
+                    <div className="relative hint-container" style={isPlayerMobileLayout ? { display: "contents" } : undefined}>
                       <button
                         type="button"
+                        {...mobileKeyboardButtonProps}
                         onClick={() => {
                           if (showHowToPlay) return;
                           resumeGameForPlayerAction();
@@ -5437,6 +5859,8 @@ export default function TriangleWordGamePrototypeFixed() {
                         style={{
                           background: activeButton === "hint" ? theme.controlActiveBg : "transparent",
                           color: showHowToPlay ? theme.disabledText : theme.text,
+                          ...mobileBannerTextButtonStyle,
+                          ...mobileBannerControlOffsetStyle,
                         }}
                       >
                         Hint
@@ -5445,11 +5869,12 @@ export default function TriangleWordGamePrototypeFixed() {
                       {showHintMenu && (
                         <div
                           className="absolute right-0 top-[calc(100%+10px)] z-40 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-                          style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
+                          style={{ background: theme.menuBg, borderColor: theme.menuBorder, ...getPlayerBannerMenuStyle("right") }}
                         >
                           {isPlayerFinished && (
                             <button
                               type="button"
+                              {...mobileKeyboardButtonProps}
                               onClick={revealAllHints}
                               className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] font-normal transition-colors"
                               style={{
@@ -5480,6 +5905,7 @@ export default function TriangleWordGamePrototypeFixed() {
                               <div key={section.heading}>
                                 <button
                                   type="button"
+                                  {...mobileKeyboardButtonProps}
                                   onClick={() => {
                                     setOpenHintSection((prev) => (prev === section.heading ? null : section.heading));
                                     setHoveredHintTooltip(null);
@@ -5518,6 +5944,7 @@ export default function TriangleWordGamePrototypeFixed() {
                                         <div key={`${section.heading}-${item}`} className="relative">
                                           <button
                                             type="button"
+                                            {...mobileKeyboardButtonProps}
                                             onClick={() => {
                                               if (isUnlocked) return;
                                               handleHintItemClick(section.heading, item);
@@ -5554,6 +5981,7 @@ export default function TriangleWordGamePrototypeFixed() {
 
                     <button
                       ref={clearButtonRef}
+                      {...mobileKeyboardButtonProps}
                       onClick={() => {
                         if (showHowToPlay) return;
                         if (isPlayerFinished) return;
@@ -5567,14 +5995,17 @@ export default function TriangleWordGamePrototypeFixed() {
                       style={{
                         background: activeButton === "clear" ? theme.controlActiveBg : "transparent",
                         color: isPlayerFinished || showHowToPlay ? theme.disabledText : theme.text,
+                        ...mobileBannerTextButtonStyle,
+                        ...mobileBannerControlOffsetStyle,
                       }}
                     >
                       Clear
                     </button>
                     </div>
 
-                    <div className="relative reveal-container">
+                    <div className="relative reveal-container" style={isPlayerMobileLayout ? { display: "contents" } : undefined}>
                       <button
+                        {...mobileKeyboardButtonProps}
                         onClick={() => {
                           if (showHowToPlay) return;
                           if (isPlayerFinished) return;
@@ -5593,6 +6024,8 @@ export default function TriangleWordGamePrototypeFixed() {
                         style={{
                           background: activeButton === "reveal" ? theme.controlActiveBg : "transparent",
                           color: isPlayerFinished || showHowToPlay ? theme.disabledText : theme.text,
+                          ...mobileBannerTextButtonStyle,
+                          ...mobileBannerControlOffsetStyle,
                         }}
                       >
                         Reveal
@@ -5601,7 +6034,7 @@ export default function TriangleWordGamePrototypeFixed() {
                       {showRevealMenu && (
                         <div
                           className="absolute right-0 top-[calc(100%+10px)] z-40 w-[220px] overflow-hidden rounded-[18px] border shadow-[0_12px_30px_rgba(0,0,0,0.12)]"
-                          style={{ background: theme.menuBg, borderColor: theme.menuBorder }}
+                          style={{ background: theme.menuBg, borderColor: theme.menuBorder, ...getPlayerBannerMenuStyle("right") }}
                         >
                           {[
                             { label: "Square", action: "square" },
@@ -5613,6 +6046,7 @@ export default function TriangleWordGamePrototypeFixed() {
                             <button
                               key={item.label}
                               type="button"
+                              {...mobileKeyboardButtonProps}
                               onClick={() => requestRevealAction(item.action)}
                               className="block w-full cursor-pointer px-4 py-3 text-left text-[16px] font-normal transition-colors"
                               style={{ color: theme.text, background: "transparent" }}
@@ -5637,9 +6071,14 @@ export default function TriangleWordGamePrototypeFixed() {
                     <button
                       className="flex items-center justify-center rounded-lg px-2 py-1.5"
                       type="button"
+                      {...mobileKeyboardButtonProps}
                       onClick={showHowToPlay ? returnToGame : openHowToPlay}
                       aria-label="How to play"
-                      style={{ background: activeButton === "help" ? theme.controlActiveBg : "transparent" }}
+                      style={{
+                        background: activeButton === "help" ? theme.controlActiveBg : "transparent",
+                        ...(isPlayerMobileLayout ? { padding: "5px 6px" } : {}),
+                        ...mobileBannerControlOffsetStyle,
+                      }}
                     >
                       <HelpCircle size={21} strokeWidth={1.5} />
                     </button>
@@ -6382,13 +6821,28 @@ export default function TriangleWordGamePrototypeFixed() {
                   mode === "player"
                     ? `${isPlayerStackedLayout ? PLAYER_BOARD_CLUE_GAP : playerHorizontalTracks.gap}px`
                     : undefined,
-                rowGap: mode === "player" ? (isPlayerStackedLayout ? "0px" : undefined) : undefined,
+                rowGap: mode === "player" && isPlayerStackedLayout ? "0px" : undefined,
                 alignContent: mode === "player" && isPlayerStackedLayout ? "start" : undefined,
+                gridTemplateRows:
+                  mode === "player" && isPlayerMobileLayout ? "minmax(0, 1fr) auto" : undefined,
+                minHeight:
+                  mode === "player" && shouldLockPlayerViewport
+                    ? typeof lockedPlayerContentHeight === "number"
+                      ? `${lockedPlayerContentHeight}px`
+                      : lockedPlayerContentHeight
+                    : undefined,
+                height:
+                  mode === "player" && shouldLockPlayerViewport
+                    ? typeof lockedPlayerContentHeight === "number"
+                      ? `${lockedPlayerContentHeight}px`
+                      : lockedPlayerContentHeight
+                    : undefined,
+                overflow: mode === "player" && shouldLockPlayerViewport ? "hidden" : undefined,
               }}
             >
               <div
                 ref={boardPaneRef}
-                className={`relative ${mode === "editor" ? "h-[calc((100vh-62px)*0.7)] flex-none overflow-hidden px-5 py-6" : isPlayerStackedLayout ? "overflow-hidden px-5 py-0" : "flex-1 overflow-hidden px-0 py-6"}`}
+                className={`relative ${mode === "editor" ? "h-[calc((100vh-62px)*0.7)] flex-none overflow-hidden px-5 py-6" : isPlayerStackedLayout ? (isPlayerMobileLayout ? "flex items-center overflow-hidden px-0 py-0" : "overflow-hidden px-5 py-0") : "flex-1 overflow-hidden px-0 py-6"}`}
               >
                 <div
                   ref={boardShellRef}
@@ -6399,7 +6853,7 @@ export default function TriangleWordGamePrototypeFixed() {
                       : isPlayerStackedLayout
                         ? {
                             height: `${playerStackedBoardShellHeight}px`,
-                            maxWidth: "560px",
+                            maxWidth: isPlayerMobileLayout ? "100%" : "560px",
                             margin: "0 auto",
                           }
                         : {
@@ -6495,6 +6949,7 @@ export default function TriangleWordGamePrototypeFixed() {
                       }}
                       onKeyDown={(e) => handleSquareKeyDown(e, square)}
                       maxLength={1}
+                      inputMode={mode === "player" && isPlayerMobileLayout ? "none" : undefined}
                       className="w-full h-full bg-transparent text-center outline-none"
                       style={{
                         position: "relative",
@@ -6509,7 +6964,10 @@ export default function TriangleWordGamePrototypeFixed() {
                         pointerEvents: mode === "editor" || (mode === "player" && (finishedState || isPlayerInputLocked)) ? "none" : "auto",
                       }}
                       aria-label={`Square ${square.id}`}
-                      readOnly={Boolean(dragState?.id === square.id) || (mode === "player" && Boolean(finishedState))}
+                      readOnly={
+                        Boolean(dragState?.id === square.id) ||
+                        (mode === "player" && (Boolean(finishedState) || isPlayerMobileLayout))
+                      }
                       disabled={mode === "player" && isPlayerInputLocked}
                       tabIndex={mode === "player" && isPlayerInputLocked ? -1 : undefined}
                     />
@@ -6590,7 +7048,7 @@ export default function TriangleWordGamePrototypeFixed() {
 
           <div
             ref={mode === "player" ? playerCluePaneRef : null}
-            className={`${mode === "editor" ? "px-6 pb-6 pt-0 h-[calc((100vh-62px)*0.3)] flex flex-col justify-start" : isPlayerStackedLayout ? "px-5 pt-0 pb-8 flex flex-col items-start gap-6" : "px-0 pt-16 pb-6 flex flex-col items-start gap-6 min-h-full"}`}
+            className={`${mode === "editor" ? "px-6 pb-6 pt-0 h-[calc((100vh-62px)*0.3)] flex flex-col justify-start" : isPlayerStackedLayout ? (isPlayerMobileLayout ? "sticky bottom-0 z-20 px-3 pt-0 pb-3 flex flex-col items-stretch gap-0" : "px-5 pt-0 pb-8 flex flex-col items-start gap-6") : "px-0 pt-16 pb-6 flex flex-col items-start gap-6 min-h-full"}`}
           >
 
             {mode === "editor" && (
@@ -6670,14 +7128,95 @@ export default function TriangleWordGamePrototypeFixed() {
             {mode === "player" && (
               <div
                 ref={clueStackRef}
-                className="w-full max-w-[440px] flex flex-col gap-0"
+                className={`${isPlayerMobileLayout ? "w-full" : "w-full max-w-[440px]"} flex flex-col gap-0`}
                 style={{
-                  width: `${PLAYER_CLUE_STACK_MAX_WIDTH}px`,
-                  marginLeft: `${clueStackOffsetX / Math.max(playerClueStackScale, 0.001)}px`,
-                  zoom: playerClueStackScale,
+                  width: isPlayerMobileLayout ? "100%" : `${PLAYER_CLUE_STACK_MAX_WIDTH}px`,
+                  marginLeft: isPlayerMobileLayout
+                    ? 0
+                    : `${clueStackOffsetX / Math.max(playerClueStackScale, 0.001)}px`,
+                  zoom: isPlayerMobileLayout ? 1 : playerClueStackScale,
                 }}
               >
-                {playerClues.map((clue, index) => (
+                {isPlayerMobileLayout
+                  ? (() => {
+                    const index = activePlayerClueIndex;
+                    const side = CLUE_SIDE_KEYS[index] || "base";
+                    const clue = playerClues[index] || "";
+                    const sectionHeading = HINT_SECTIONS[index]?.heading;
+                    const allowedHintTypes = sectionHeading
+                      ? Array.from(revealedHintTypesBySection[sectionHeading] || [])
+                      : [];
+                    return (
+                      <div
+                        ref={(el) => {
+                          clueRefs.current[index] = el;
+                        }}
+                        className="grid w-full items-center"
+                        role="group"
+                        aria-label={`${SIDE_DISPLAY_LABELS[side]} clue`}
+                        style={{
+                          gridTemplateColumns: "44px minmax(0, 1fr) 44px",
+                          height: `${PLAYER_MOBILE_CLUE_HEIGHT}px`,
+                          minHeight: `${PLAYER_MOBILE_CLUE_HEIGHT}px`,
+                          borderRadius: "18px",
+                          background: theme.clueActiveBg,
+                          color: theme.text,
+                          boxShadow: usePlayerAppearanceTheme
+                            ? "0 -1px 0 rgba(255,255,255,0.08)"
+                            : "0 -1px 0 rgba(0,0,0,0.08)",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="flex h-full items-center justify-center"
+                          {...mobileKeyboardButtonProps}
+                          onClick={() => activateMobileArrowClue("left")}
+                          disabled={isPlayerInputLocked}
+                          aria-label="Move clue left"
+                          style={{ color: isPlayerInputLocked ? theme.disabledText : theme.text }}
+                        >
+                          <ChevronLeft size={32} strokeWidth={2.5} />
+                        </button>
+                        <button
+                          type="button"
+                          className="flex h-full min-w-0 items-center justify-center px-1 text-center"
+                          {...mobileKeyboardButtonProps}
+                          onClick={(event) => {
+                            if (handleClueHintTap(event, index)) return;
+                            handlePlayerClueActivate(index);
+                          }}
+                          disabled={isPlayerInputLocked}
+                          style={{ color: shouldShowPlayerClues ? theme.text : "transparent" }}
+                        >
+                          <AutoFitClueText
+                            text={clue}
+                            html={
+                              shouldShowPlayerClues
+                                ? clueHtmlToFilteredPlayerHtml(clues[index]?.html || "", allowedHintTypes)
+                                : ""
+                            }
+                            fontFamily={PLAYER_UI_FONT}
+                            fixedFontSize={Math.min(sharedPlayerClueFontSize, 24)}
+                            highlightStyles={playerClueHighlightStyles}
+                            richTextClassName="player-clue-rich player-clue-rich-active"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          className="flex h-full items-center justify-center"
+                          {...mobileKeyboardButtonProps}
+                          onClick={() => activateMobileArrowClue("right")}
+                          disabled={isPlayerInputLocked}
+                          aria-label="Move clue right"
+                          style={{ color: isPlayerInputLocked ? theme.disabledText : theme.text }}
+                        >
+                          <ChevronRight size={32} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    );
+                  })()
+                  : playerClues.map((clue, index) => (
                   (() => {
                     const side = index === 0 ? "left" : index === 1 ? "right" : "base";
                     const isActive = activeSide === side;
@@ -6729,6 +7268,70 @@ export default function TriangleWordGamePrototypeFixed() {
                     );
                   })()
                 ))}
+                {isPlayerMobileLayout && (
+                  <div
+                    className="mt-2 flex flex-col gap-1.5"
+                    aria-label="Letter keyboard"
+                    style={{
+                      height: `${PLAYER_MOBILE_KEYBOARD_HEIGHT - 8}px`,
+                      touchAction: "manipulation",
+                    }}
+                  >
+                    {MOBILE_QWERTY_ROWS.map((row, rowIndex) => {
+                      const rowLetters = [...row];
+                      const rowHasDelete = rowIndex === MOBILE_QWERTY_ROWS.length - 1;
+                      return (
+                        <div
+                          key={row}
+                          className="grid gap-1.5"
+                          style={{
+                            gridTemplateColumns: rowHasDelete
+                              ? `repeat(${rowLetters.length}, minmax(0, 1fr)) minmax(42px, 1.35fr)`
+                              : `repeat(${rowLetters.length}, minmax(0, 1fr))`,
+                            paddingLeft: rowIndex === 1 ? "5%" : rowIndex === 2 ? "9%" : 0,
+                            paddingRight: rowIndex === 1 ? "5%" : rowIndex === 2 ? "2%" : 0,
+                          }}
+                        >
+                          {rowLetters.map((letter) => (
+                            <button
+                              key={letter}
+                              type="button"
+                              disabled={isPlayerInputLocked || Boolean(finishedState)}
+                              onPointerDown={(event) => event.preventDefault()}
+                              onClick={() => handleMobileKeyboardLetter(letter)}
+                              className="flex h-[42px] min-w-0 items-center justify-center rounded-[8px] text-[17px] font-semibold shadow-[0_1px_0_rgba(0,0,0,0.18)] disabled:opacity-45"
+                              style={{
+                                background: usePlayerAppearanceTheme ? "#334155" : "#ffffff",
+                                color: theme.text,
+                                border: `1px solid ${theme.controlBorder}`,
+                                fontFamily: PLAYER_UI_FONT,
+                              }}
+                            >
+                              {letter}
+                            </button>
+                          ))}
+                          {rowHasDelete && (
+                            <button
+                              type="button"
+                              disabled={isPlayerInputLocked || Boolean(finishedState)}
+                              onPointerDown={(event) => event.preventDefault()}
+                              onClick={handleMobileKeyboardDelete}
+                              className="flex h-[42px] min-w-0 items-center justify-center rounded-[8px] shadow-[0_1px_0_rgba(0,0,0,0.18)] disabled:opacity-45"
+                              style={{
+                                background: usePlayerAppearanceTheme ? "#475569" : "#e5e7eb",
+                                color: theme.text,
+                                border: `1px solid ${theme.controlBorder}`,
+                              }}
+                              aria-label="Delete letter"
+                            >
+                              <Delete size={22} strokeWidth={2} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -6816,21 +7419,36 @@ export default function TriangleWordGamePrototypeFixed() {
       {hoveredHintTooltip ? (
         <div
           className="absolute z-50 rounded-[18px] border-2 px-4 py-3 text-[15px] leading-5"
+          onClick={
+            hoveredHintTooltip.interactive
+              ? (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  hideHintTooltip();
+                }
+              : undefined
+          }
           style={{
             left: `${hoveredHintTooltip.centerX}px`,
             top: `${hoveredHintTooltip.top}px`,
             transform: "translateX(-50%)",
             width: `${hoveredHintTooltip.width}px`,
             maxWidth: `${hoveredHintTooltip.maxWidth}px`,
+            height: hoveredHintTooltip.height ? `${hoveredHintTooltip.height}px` : undefined,
+            minHeight: hoveredHintTooltip.minHeight ? `${hoveredHintTooltip.minHeight}px` : undefined,
             boxSizing: "border-box",
             background: "#ffffff",
             borderColor: "#000000",
             color: "#000000",
             padding: `${12 * (hoveredHintTooltip.fontScale ?? 1)}px ${16 * (hoveredHintTooltip.fontScale ?? 1)}px`,
-            pointerEvents: "none",
+            pointerEvents: hoveredHintTooltip.interactive ? "auto" : "none",
+            cursor: hoveredHintTooltip.interactive ? "pointer" : undefined,
             textAlign: "left",
             overflowWrap: "break-word",
             whiteSpace: "normal",
+            display: hoveredHintTooltip.height || hoveredHintTooltip.minHeight ? "flex" : undefined,
+            alignItems: hoveredHintTooltip.height || hoveredHintTooltip.minHeight ? "flex-start" : undefined,
+            overflow: hoveredHintTooltip.height ? "hidden" : undefined,
           }}
         >
           <span
